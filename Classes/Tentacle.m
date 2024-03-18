@@ -1,19 +1,24 @@
 classdef Tentacle
     % This is a tentacle composed of joints 
     % #TODO update this description
-    % after moment intergreation etc
+    % after moment intergration etc
     
     %% Private Properties
-    properties
+    properties (Access = private)
         Joints Joint; % An array of joint objects
-        HGMs double; % An matrix of the homogenous transfomration matrices
+        HGMs double; % A matrix of the homogenous transfomration matrices
+        Jacobean double; % the Jacobean matrix for this tentacle.
+        Links double; %COM of each Link
+        MagneticMoments double; % A Matrix of magnetic moments Associated with each Link.
+        MomentStrength double; % The magnetic moment magnitude for each Link.
     end
 
     %% Public Methods
     methods
 
+        %% Constructor
         % Constructor
-        function obj = Tentacle(LinkLength,Angles)
+        function obj = Tentacle(LinkLength,Angles,Magnetisation)
             %TENTACLE Construct an instance of Tentacle
             
             % Create n Joints, where n is the number of rows in the
@@ -26,16 +31,66 @@ classdef Tentacle
                     obj.Joints(i) = joint;
                 
                 else
-                    % Lengths now involved
+                   % Lengths now involved
                    joint = Joint(Angles(i,1),Angles(i,2),0,LinkLength);
                    obj.Joints(i) = joint;
                 end
             end
 
+            % Obtain Moment Magnitude of each Link.
+            obj.MomentStrength = Magnetisation/(size(Angles,1)-1);
+
             % Evaluate Homogeneous Transformation Matrices
             obj = EvaluateHGM(obj);
+
+            % Evaluate Jacobean Matrix
+            obj = EvaluateJacobean(obj);
+
+            obj = EvaluateMagMoments(obj);
+
         end
-        
+        % End Constructor
+
+        %% Update Angles Fucntion
+        % Update angles
+        function obj = UpdateAngles(obj, Angles)
+
+            if size(Angles,1) ~= length(obj.Joints)
+                disp("Incorrect number of angles")
+            else
+                %Update the angles
+                for i=1:size(Angles,1)
+                    joint = obj.Joints(i);  %Extract joint
+                    obj.Joints(i) = joint.UpdateAngles(Angles(i,:)); %Inject new angle and update joints array
+                end
+                %End For Loop
+            end
+            %end If/Else statement
+
+            % Evaluate Homogeneous Transformation Matrices
+            obj = EvaluateHGM(obj);
+    
+            % Evaluate Jacobean Matrix
+            obj = EvaluateJacobean(obj);
+
+            obj = EvaluateMagMoments(obj);
+    
+            %End Update Angles
+            end
+
+        %% Accessors
+        function HGMs = getHGMs(obj)
+            
+            % Accessor to retrieve the private property HGMs
+            HGMs = obj.HGMs;
+        end
+
+        function Jacobean = getJacobean(obj)
+            
+            % Accessor to retrieve the private property HGMs
+            Jacobean = obj.Jacobean;
+        end
+
     end
 
     %% Private methods
@@ -79,6 +134,80 @@ classdef Tentacle
             end
         
         % End EvaluateHGM Function
+        end
+
+        % Function to evaluate the Jacobean Matrix
+        function obj = EvaluateJacobean(obj)
+        % The inputs to this function are the homogenous transformation matrices,  the output is the Jacobian.
+              
+            % Get the number of columns
+            NumCols = length(obj.Joints);
+
+            IDvec = [0;0;1];
+
+            %Init Jacobean
+            obj.Jacobean = zeros(6,NumCols-1);
+
+            for i = 1:(length(obj.Joints)-1)
+                
+                    obj.Jacobean(1:3,i) = cross((obj.HGMs(1:3,1:3,i)*IDvec),(obj.HGMs(1:3,4,NumCols)-obj.HGMs(1:3,4,i)));
+                    obj.Jacobean(4:6,i) = obj.HGMs(1:3,1:3,i)*IDvec;
+
+            end
+
+            %set any tiny elements to 0
+            obj.Jacobean(abs(obj.Jacobean) < (1.0e-10)) = 0;
+
+        end
+
+        % Function to evaluate the magentic moment (magnitude and
+        % direction and location) for each Link
+        function obj = EvaluateMagMoments(obj)
+            
+            %Get COMs of each link for applying the moment
+            LinkCOMFrames = GetCOM(obj);
+
+            %for each linkCOMframe, work out moment
+            for i = 1:size(LinkCOMFrames,3)
+                
+                frame = LinkCOMFrames(:,:,i);
+
+                % Populate links
+                obj.Links(:,i) = frame(1:3,4);
+
+                %Get direction from origin to LinkCOMframe
+                dir = (obj.Links(:,i) - [0;0;0]) / norm(obj.Links(:,i) - [0;0;0]);
+
+                % Populate Magnetic moment vectors associated with each
+                % link
+                obj.MagneticMoments(:,i) = obj.MomentStrength*dir;
+
+            end
+
+
+        end
+
+        % Function to evaluate the COM of each Link
+        function LinkCOMFrames = GetCOM(obj)
+
+            % extract start and end HGMs
+            for i=1:(length(obj.Joints)-1)
+
+                % Extract Positions (translation components)
+                P1 = obj.HGMs(1:3,4,i);
+                P2 = obj.HGMs(1:3,4,i+1);
+
+                % Calculate Midpoint
+                midPoint = (P1 + P2) / 2;
+
+                % Copy start frame (for correct orientation)
+                LinkCOMFrames(:,:,i) = obj.HGMs(:,:,i);
+
+                %Update Postion
+                LinkCOMFrames(1:3,4,i) = midPoint;
+
+            end
+
         end
 
     end

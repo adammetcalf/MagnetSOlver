@@ -3,7 +3,7 @@ classdef Joint
     % Hartenberg frame
     
     %% Private Properties
-    properties (Access = public)
+    properties (Access = private) 
         a double; %DH Parameter (in m)
         d double; %DH Parameter (in m)
         theta double; %DH Parameter (in radians)
@@ -28,17 +28,15 @@ classdef Joint
             obj = evaluateFrame(obj);
         end
 
-        function Frame = UpdateAngles(obj,theta,alpha)
+        function obj = UpdateAngles(obj,Angles)
             % Update the angles and re-evaluate the frame
 
-            obj.theta = deg2rad(theta);
-            obj.alpha = deg2rad(alpha);
+            obj.theta = deg2rad(Angles(1));
+            obj.alpha = deg2rad(Angles(2));
 
             % Evaluate Frame
             obj = evaluateFrame(obj);
 
-            % Return the frame
-            Frame = getFrame(obj);
         end
 
         %% Accessors
