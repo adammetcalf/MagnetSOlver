@@ -4,7 +4,7 @@ classdef Tentacle
     % after moment intergration etc
     
     %% Private Properties
-    properties (Access = private)
+    properties (Access = public)
         Joints Joint; % An array of joint objects
         HGMs double; % A matrix of the homogenous transfomration matrices
         Jacobean double; % the Jacobean matrix for this tentacle.
@@ -52,7 +52,7 @@ classdef Tentacle
         end
         % End Constructor
 
-        %% Update Angles Fucntion
+        %% Update Angles Function
         % Update angles
         function obj = UpdateAngles(obj, Angles)
 
@@ -82,23 +82,24 @@ classdef Tentacle
 
         %% Accessors
         function HGMs = getHGMs(obj)
-            
             % Accessor to retrieve the private property HGMs
             HGMs = obj.HGMs;
         end
 
         function Jacobean = getJacobean(obj)
-            
             % Accessor to retrieve the private property HGMs
             Jacobean = obj.Jacobean;
         end
 
         function Links = getLinks(obj)
-            
             % Accessor to retrieve the private property HGMs
             Links = obj.Links;
         end
 
+        function MagneticMoments = getMagneticMoments(obj)
+            % Accessor to retrieve the magnetic moment vectors
+            MagneticMoments = obj.MagneticMoments;
+        end
     end
 
     %% Private methods
@@ -178,17 +179,20 @@ classdef Tentacle
             %for each linkCOMframe, work out moment
             for i = 1:size(LinkCOMFrames,3)
                 
+                % Obtain HGM
                 frame = LinkCOMFrames(:,:,i);
 
-                % Populate links
+                % Populate links matrix
                 obj.Links(:,i) = frame(1:3,4);
 
-                %Get direction from origin to LinkCOMframe
-                dir = (obj.Links(:,i) - [0;0;0]) / norm(obj.Links(:,i) - [0;0;0]);
+                % Obtain rotation
+                Rotation = frame(1:3, 1:3);
 
-                % Populate Magnetic moment vectors associated with each
-                % link
-                obj.MagneticMoments(:,i) = obj.MomentStrength*dir;
+                % Define magnetic moment in local frame orientation
+                momentLocal = [0;0;obj.MomentStrength];
+
+                % Transform the magnetic moment to the global frame
+                obj.MagneticMoments(:,i) = Rotation * momentLocal;
 
             end
 
