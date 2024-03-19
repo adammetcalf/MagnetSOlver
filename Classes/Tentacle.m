@@ -46,6 +46,7 @@ classdef Tentacle
             % Evaluate Jacobean Matrix
             obj = EvaluateJacobean(obj);
 
+            % Evaluate Magnetic Moment of each joint
             obj = EvaluateMagMoments(obj);
 
         end
@@ -73,6 +74,7 @@ classdef Tentacle
             % Evaluate Jacobean Matrix
             obj = EvaluateJacobean(obj);
 
+            % Evaluate Magnetic Moment of each joint
             obj = EvaluateMagMoments(obj);
     
             %End Update Angles
@@ -89,6 +91,12 @@ classdef Tentacle
             
             % Accessor to retrieve the private property HGMs
             Jacobean = obj.Jacobean;
+        end
+
+        function Links = getLinks(obj)
+            
+            % Accessor to retrieve the private property HGMs
+            Links = obj.Links;
         end
 
     end
