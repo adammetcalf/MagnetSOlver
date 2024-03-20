@@ -36,23 +36,32 @@ classDiagram
         -GetCOM()
     }
     class World {
-        Gravity double
-        Tentacle Tentacle
-        mu0 double
-        threshold double
-        HomegeneousField double[]
-        x double [][]
-        y double [][]
-        z double [][]
-        Bx double [][]
-        By double [][]
-        Bz double [][]
-        +World(LinkLength, Angles, Magnetisation, HomogeneousField)
+        +double Gravity
+        +Tentacle Tentacle
+        +double MagForceTorque
+        +double PlotLength
+        +double mu0
+        +double threshold
+        +double HomegeneousField
+        +logical IncludeMultiPole
+        +double x
+        +double y
+        +double z
+        +double xIncr
+        +double yIncr
+        +double zIncr
+        +double Bx
+        +double By
+        +double Bz
+        +World(LinkLength, Angles, Magnetisation, HomogeneousField, MultipoleActive)
         +UpDateAngles(Angles)
         +plotWorld(PlotOrientationOn, MagField)
         -PlotMagenticMoments(LinkPos, Moments)
         -DetermineMagneticContribution()
+        -calcFieldContribution(Pos, Moment) double double double
         -InitMagField()
+        -EvaluateMagneticForces()
+        -findClosestGridPoint(Pos) idx idy idz
     }
     World "1" *-- "1" Tentacle
     Tentacle "1" *-- "1..n" Joint

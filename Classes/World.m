@@ -2,49 +2,67 @@ classdef World
     %This class contains the world, including a tentacle, gravity, external
     %magentic fields and the optimisation solver
     
-    properties
+    properties (Access = public)
         Gravity double = [0,0,-9.81];           % Gravity definition
         Tentacle Tentacle;                      % Tentacle object
+        MagForceTorque double;                  % Matrix to contain the Magnetic forces and torques on each link
+        PlotLength double;                      % Axis limits, related to tentacle length
 
         % Magnetic Properties
         mu0 double = 4*pi*1e-7;                 % Permeability of free space
         threshold double = 0.001;               % Singularity threshold
-        HomegeneousField double = [0,0,0];      % initialise Filed        
+        HomegeneousField double = [0,0,0];      % initialise Field  
+        IncludeMultiPole logical = false;       % Include effects of link magnetism in overall field
 
         % Magnetic Field Template
         x double;
         y double;
         z double;
 
+        % Magnetic field discrete step sizes
+        xIncr double = 0;
+        yIncr double = 0;
+        zIncr double = 0;
+
         % Magnetic Field
         Bx double;
         By double;
         Bz double;
+
+        
     end
     
     %% Public Methods
     methods (Access = public)
 
         %% Constructor
-        function obj = World(LinkLength, Angles, Magnetisation, HomogeneousField)
+        function obj = World(LinkLength, Angles, Magnetisation, HomogeneousField,MultipoleActive)
             %WORLD Construct an instance of World
 
             % Create a tentacle
             obj.Tentacle = Tentacle(LinkLength,Angles,Magnetisation);
 
+            % Get overall tentacle length
+            obj.PlotLength = (size(Angles,1)+2)*LinkLength;
+
             % Create the magnetic field template
             xLow = -0.1;   yLow = -0.1;   zLow = -0.1;
             xHigh = 0.1;   yHigh = 0.1;   zHigh = 0.1;
-            xIncr = 0.005;  yIncr = 0.005;  zIncr = 0.005; %steps size
+            obj.xIncr = 0.005;  obj.yIncr = 0.005;  obj.zIncr = 0.005; %steps size
 
             % Inject homegeneous field in case of re-initialisation
             obj.HomegeneousField = HomogeneousField;
+
+            obj.IncludeMultiPole = MultipoleActive;
             
             % Create the meshgrid used for magnetic simulation
-            [obj.x, obj.y, obj.z] = meshgrid(xLow:xIncr:xHigh, yLow:yIncr:yHigh, zLow:zIncr:zHigh);
+            [obj.x, obj.y, obj.z] = meshgrid(xLow:obj.xIncr:xHigh, yLow:obj.yIncr:yHigh, zLow:obj.zIncr:zHigh);
 
             % Init magfield
             obj = obj.InitMagField();
+
+            % Evaluate Magnetic Forces and Torques
+            obj = EvaluateMagneticForces(obj);
 
         end
         
@@ -56,6 +74,9 @@ classdef World
 
             % Re-init magfield
             obj = obj.InitMagField();
+
+            % Evaluate Magnetic Forces and Torques
+            obj = EvaluateMagneticForces(obj);
         end
 
         %% Function to Plot
@@ -99,7 +120,7 @@ classdef World
                 quiver3(obj.x, obj.y, obj.z, obj.Bx, obj.By, obj.Bz, 0.5, 'b','LineWidth', 0.25);
             end
             axis equal;
-            axis([-0.1 0.1 -0.1 0.1 -0.1 0.1]);
+            axis([-obj.PlotLength obj.PlotLength -obj.PlotLength obj.PlotLength -obj.PlotLength obj.PlotLength]);
             grid on
             xlabel('X')
             ylabel('Y')
@@ -139,6 +160,18 @@ classdef World
                 Moment = Moments(:,i);
 
                 %evaluate magnetic field contribution of dipole
+                [BxDipole,ByDipole,BzDipole] = calcFieldContribution(obj,Pos,Moment);
+
+                % Update Overall Magnetic Field
+                obj.Bx = obj.Bx + BxDipole;
+                obj.By = obj.By + ByDipole;
+                obj.Bz = obj.Bz + BzDipole;
+            end
+
+        end
+
+        % Calculate the FieldContirbution of an individual Dipole
+        function [BxDipole,ByDipole,BzDipole] = calcFieldContribution(obj,Pos,Moment)
                 x1 = obj.x - Pos(1);
                 y1 = obj.y - Pos(2);
                 z1 = obj.z - Pos(3);
@@ -149,17 +182,9 @@ classdef World
                 ByDipole = obj.mu0/(4*pi) * (3*(Moment(1)*rx1 + Moment(2)*ry1 + Moment(3)*rz1).*ry1 - Moment(2))./r1.^3;
                 BzDipole = obj.mu0/(4*pi) * (3*(Moment(1)*rx1 + Moment(2)*ry1 + Moment(3)*rz1).*rz1 - Moment(3))./r1.^3;
             
-                % Remove singularities for all dipoles
+                % Remove singularities for dipole
                 BxDipole(r1<obj.threshold) = 0; ByDipole(r1<obj.threshold) = 0; BzDipole(r1<obj.threshold) = 0;
-
-                % Update Overall Magnetic Field
-                obj.Bx = obj.Bx + BxDipole;
-                obj.By = obj.By + ByDipole;
-                obj.Bz = obj.Bz + BzDipole;
-            end
-
         end
-
 
         % Function to initialise the Magnetic field
         function obj = InitMagField(obj)
@@ -174,10 +199,92 @@ classdef World
             obj.By = obj.HomegeneousField(2)*ones(size(obj.y));
             obj.Bz = obj.HomegeneousField(3)*ones(size(obj.z));
 
-            % Determine Magnetic contribution of each link
-            obj = DetermineMagneticContribution(obj);
+            if obj.IncludeMultiPole
+                % Determine Magnetic contribution of each link
+                obj = DetermineMagneticContribution(obj);
+            end
 
         end
+
+        % Function to evaluate magentic forces at each joint
+        function obj = EvaluateMagneticForces(obj)
+
+            %Get the tentacle Link positions
+            LinkPos = obj.Tentacle.getLinks();
+
+            % Get Magnetic moment vectors
+            Moments = obj.Tentacle.getMagneticMoments();
+
+
+            % Evaluate Torque/Force at each point
+            for i = 1:size(LinkPos,2) 
+                
+                %Create a local copy of the magnetic field in order to
+                %remove the contribution of this Link
+                BxLocal = obj.Bx;
+                ByLocal = obj.By;
+                BzLocal = obj.Bz;
+
+                %Get the link moment and position
+                Pos = LinkPos(:,i);
+                Moment = Moments(:,i);
+
+                if obj.IncludeMultiPole
+                    % Remove the effects of this particular point of interest
+                    % from the magnetic field to remove self-interaction
+                    % effects
+                    [BxDipole,ByDipole,BzDipole] = calcFieldContribution(obj,Pos,Moment);
+                    BxLocal = BxLocal-BxDipole;
+                    ByLocal = ByLocal-ByDipole;
+                    BzLocal = BzLocal-BzDipole;
+                    % The Magnetic field contained by BxLocal etc is not
+                    % appropriate to apply to this Link
+                end
+
+                %Find closest grid point to POI - this is where we will be
+                % actually applying the field
+                [idx, idy, idz] = findClosestGridPoint(obj, Pos);
+
+                % Compute spacial derivatives
+                [dBx_dx, dBx_dy, dBx_dz] = gradient(BxLocal, obj.x(1,:,1), obj.y(:,1,1), obj.z(1,1,:));
+                [~, dBy_dy, dBy_dz] = gradient(ByLocal, obj.x(1,:,1), obj.y(:,1,1), obj.z(1,1,:));
+                
+
+                % Construct U vector
+                U = [dBx_dx(idx, idy, idz); ...
+                     dBx_dy(idx, idy, idz); ...
+                     dBx_dz(idx, idy, idz); ...
+                     dBy_dy(idx, idy, idz); ...
+                     dBy_dz(idx, idy, idz); ...
+                     BxLocal(idx, idy, idz); ...
+                     ByLocal(idx, idy, idz); ...
+                     BzLocal(idx, idy, idz)];
+
+                % Construct Moment matrix
+                mx = Moment(1);
+                my = Moment(2);
+                mz = Moment(3);
+                MagMoments = [mx, my, mz,   0,  0,   0,   0,  0
+                               0, mx, 0,   my, mz,   0,   0,  0
+                             -mz,  0, mx, -mz, my,   0,   0,  0
+                               0,  0, 0,    0,  0,   0, -mz,  my
+                               0,  0, 0,    0,  0,  mz,   0, -mx
+                               0,  0, 0,    0,  0, -my,  mx,  0];
+
+                % Apply the maths to get [Fx;Fy;Fz;Taux;Tauy;Tauz] 
+                obj.MagForceTorque(i,:) = MagMoments*U;
+            end
+
+
+        end
+
+        % Function to find the closest grid point
+        function [idx, idy, idz] = findClosestGridPoint(obj, Pos)
+            [~, idx] = min(abs(obj.x(1,:,1) - Pos(1)));
+            [~, idy] = min(abs(obj.y(:,1,1) - Pos(2)));
+            [~, idz] = min(abs(obj.z(1,1,:) - Pos(3)));
+        end 
+
     end
 end
 
