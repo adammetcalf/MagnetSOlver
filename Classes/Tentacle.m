@@ -4,7 +4,7 @@ classdef Tentacle
     % after moment intergration etc
     
     %% Private Properties
-    properties (Access = public)
+    properties (Access = private)
         Joints Joint; % An array of joint objects
         HGMs double; % A matrix of the homogenous transfomration matrices
         Jacobean double; % the Jacobean matrix for this tentacle.
