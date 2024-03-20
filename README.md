@@ -4,6 +4,7 @@ This is the magnetic tentacle solver
 title: Tentacle Solver
 ---
 
+```mermaid
 classDiagram
     class Joint {
         -double a
@@ -55,3 +56,4 @@ classDiagram
     }
     World "1" *-- "1" Tentacle
     Tentacle "1" *-- "1..n" Joint
+```
