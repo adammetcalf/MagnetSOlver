@@ -11,6 +11,8 @@ classdef Tentacle
         Links double; %COM of each Link
         MagneticMoments double; % A Matrix of magnetic moments Associated with each Link.
         MomentStrength double; % The magnetic moment magnitude for each Link.
+        JointStiffness double; % Holds the joint stiffness value for each joint
+        LinkMass double; % holds the mass of each link
     end
 
     %% Public Methods
@@ -36,6 +38,18 @@ classdef Tentacle
                    obj.Joints(i) = joint;
                 end
             end
+
+            % Link Radii (m)
+            radius = 1e-03;
+            
+            % EcoFlex 0030 Density (kg m^-3)
+            rho = 1070; 
+            
+            % Youngs Modulus Ecoflex 0030 (125 kPa)
+            E = 125000;
+
+            % Evaluate Material properties
+            obj = MaterialProperties(obj, radius,rho,LinkLength,E);
 
             % Obtain Moment Magnitude of each Link.
             obj.MomentStrength = Magnetisation/(size(Angles,1)-1);
@@ -99,6 +113,16 @@ classdef Tentacle
         function MagneticMoments = getMagneticMoments(obj)
             % Accessor to retrieve the magnetic moment vectors
             MagneticMoments = obj.MagneticMoments;
+        end
+
+        function JointStiffness = getStiffness(obj)
+            % Accessor to retrieve the Joint stiffness
+            JointStiffness = obj.JointStiffness;
+        end
+
+        function LinkMass = getLinkMass(obj)
+            % Accessor to retrieve the Joint stiffness
+            LinkMass = obj.LinkMass;
         end
     end
 
@@ -219,6 +243,34 @@ classdef Tentacle
                 LinkCOMFrames(1:3,4,i) = midPoint;
 
             end
+
+        end
+
+        % obtain link mass and joint stiffness
+        function obj = MaterialProperties(obj, radius,rho,Length,E)
+
+            % Link Volumes (m^3)
+            Vol = Length*pi*(radius^2);       
+            
+            % Link Masses 
+            obj.LinkMass = rho*Vol;
+            
+            %%%%% Evalaute inertia and stiffness using link length
+            
+            % Define Inertia (kg m^-2) 
+            %%% TO DO: Inertia evaluated about correct position?
+            %%% SOLID CYCLNDER ABOUT ENDPOINT DIAMETER
+            %%% I = 1/4*m*R^2 + 1/3*m*L^2
+            
+            %I = (1/4)*obj.LinkMass*radius^2 + (1/3)*obj.LinkMass*Length;
+
+            %obj.JointStiffness = (E*I)/Length;
+            %Note, the above is for longitudinal stiffness (ie, resistance
+            %to stretch)
+
+            % Ending stiffness calculation
+            I  = (1/4)*pi*(radius^4);
+            obj.JointStiffness = (E*I);
 
         end
 

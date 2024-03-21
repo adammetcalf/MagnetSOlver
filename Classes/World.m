@@ -3,9 +3,10 @@ classdef World
     %magentic fields and the optimisation solver
     
     properties (Access = public)
-        Gravity double = [0,0,-9.81];           % Gravity definition
+        Gravity double = -9.81;                 % Gravity definition
         Tentacle Tentacle;                      % Tentacle object
         MagForceTorque double;                  % Matrix to contain the Magnetic forces and torques on each link
+        Fg double;                              % Gravitational force on each link
         PlotLength double;                      % Axis limits, related to tentacle length
 
         % Magnetic Properties
@@ -64,6 +65,9 @@ classdef World
             % Evaluate Magnetic Forces and Torques
             obj = EvaluateMagneticForces(obj);
 
+            % Evaluate Gravtiational Forces
+            obj = EvaluateGravity(obj);
+
         end
         
         %% Function to update the tentacle joint angles
@@ -77,6 +81,9 @@ classdef World
 
             % Evaluate Magnetic Forces and Torques
             obj = EvaluateMagneticForces(obj);
+
+            % Evaluate Gravtiational Forces
+            obj = EvaluateGravity(obj);
         end
 
         %% Function to Plot
@@ -272,7 +279,7 @@ classdef World
                                0,  0, 0,    0,  0, -my,  mx,  0];
 
                 % Apply the maths to get [Fx;Fy;Fz;Taux;Tauy;Tauz] 
-                obj.MagForceTorque(i,:) = MagMoments*U;
+                obj.MagForceTorque(:,i) = MagMoments*U;
             end
 
 
@@ -284,6 +291,33 @@ classdef World
             [~, idy] = min(abs(obj.y(:,1,1) - Pos(2)));
             [~, idz] = min(abs(obj.z(1,1,:) - Pos(3)));
         end 
+
+        % Function to evalutate gravity affect on each link
+        function obj = EvaluateGravity(obj)
+
+            %Get the tentacle Link z positions
+            LinkPos = obj.Tentacle.getLinks();
+            LinkPosZ = LinkPos(3,:);
+
+            % Get Link Mass
+            LinkMass = obj.Tentacle.getLinkMass();
+
+            % Work out height reference system, by finding the lowest
+            % possible point in the system
+            LinkLength = sqrt((LinkPos(1,1)-LinkPos(1,2))^2+(LinkPos(2,1)-LinkPos(2,2))^2+(LinkPos(3,1)-LinkPos(3,2))^2);
+            NumLinks = size(LinkPos,2);
+            TotalLength = (1/2)*LinkLength + (NumLinks-1)*LinkLength;
+            zBaseline = 0-TotalLength;
+
+            %Evaluate Height from baseline
+            H = LinkPosZ - zBaseline;
+
+            % Evaluate Force Due to Gravity
+            obj.Fg = H*obj.Gravity*LinkMass;
+
+            %set any tiny elements to 0
+            obj.Fg(abs(obj.Fg) < (1.0e-10)) = 0;
+        end
 
     end
 end
