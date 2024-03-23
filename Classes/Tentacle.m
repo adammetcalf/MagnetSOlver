@@ -13,6 +13,7 @@ classdef Tentacle
         MomentStrength double; % The magnetic moment magnitude for each Link.
         JointStiffness double; % Holds the joint stiffness value for each joint
         LinkMass double; % holds the mass of each link
+        Angles double; %Holds the joint angles
     end
 
     %% Public Methods
@@ -22,6 +23,8 @@ classdef Tentacle
         % Constructor
         function obj = Tentacle(LinkLength,Angles,Magnetisation)
             %TENTACLE Construct an instance of Tentacle
+
+            obj.Angles = Angles;
             
             % Create n Joints, where n is the number of rows in the
             % provided 'Angles'
@@ -69,6 +72,8 @@ classdef Tentacle
         %% Update Angles Function
         % Update angles
         function obj = UpdateAngles(obj, Angles)
+
+            obj.Angles = Angles;
 
             if size(Angles,1) ~= length(obj.Joints)
                 disp("Incorrect number of angles")
@@ -123,6 +128,12 @@ classdef Tentacle
         function LinkMass = getLinkMass(obj)
             % Accessor to retrieve the Joint stiffness
             LinkMass = obj.LinkMass;
+        end
+
+        %get the joint angles
+        function Angles = getJointAngles(obj)
+            Angles = obj.Angles;
+
         end
     end
 

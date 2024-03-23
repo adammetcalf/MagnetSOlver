@@ -12,18 +12,7 @@ MultipoleActive = true; % Include the magnetic effects of the tentacle links on 
 % Create World
 world = World(LinkLength, JointAngles, TentacleMagnetisation, HomogeneousField, MultipoleActive);
 
-% Plot the world
-world = world.plotWorld(false,true);
+% Create PoseSolver
+PoseSolver = PoseSolver(world);
 
-Angles2 = world.getJointAngles();
-
-% Make new angles
-JointAngles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0];
-
-% Update world with new angles
-world = world.UpDateAngles(JointAngles);
-
-% Plot the world
-world = world.plotWorld(false,true);
-
-Angles2 = world.getJointAngles();
+optimizedAngles = PoseSolver.optimizeJoints()

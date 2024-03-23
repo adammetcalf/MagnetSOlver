@@ -135,6 +135,19 @@ classdef World
             hold off
         end
 
+
+        %% Accessors
+        %get the joint angles
+        function Angles = getJointAngles(obj)
+            Angles = obj.Tentacle.getJointAngles();
+
+        end
+
+        % Get the torques and forces
+        function ForceTorques = getForcesTorques(obj)
+            ForceTorques = obj.MagForceTorque; % #TODO, Sum forces and torques
+        end
+
     end
 
     %% Private Methods
