@@ -18,8 +18,9 @@ classdef PoseSolver
  
             initialAngles = obj.World.getJointAngles();
             % Assuming 'initialAngles' is a Nx2 matrix, where N is the number of joints
-            lowerBounds = -180 * ones(size(initialAngles)); % Lower bounds of -180 degrees for each angle
-            upperBounds = 180 * ones(size(initialAngles)); % Upper bounds of 180 degrees for each angle
+            
+            obj.lowerBounds = -180 * ones(size(initialAngles)); % Lower bounds of -180 degrees for each angle
+            obj.upperBounds = 180 * ones(size(initialAngles)); % Upper bounds of 180 degrees for each angle
 
         end
         
@@ -55,44 +56,44 @@ classdef PoseSolver
     end
 end
 
-function optimized_sum = optimizeMatrixA(A_initial, B_function)
+%function optimized_sum = optimizeMatrixA(A_initial, B_function)
     % A_initial is the initial state of matrix A [N x 2]
     % B_function is a function handle that computes matrix B and its sum based on A
 
     % Objective function: computes the sum of elements in B based on A
-    objectiveFunction = @(A) computeSumB(A, B_function);
+   % objectiveFunction = @(A) computeSumB(A, B_function);
     
     % Initial guess for the second column of A
-    A0 = A_initial(:, 2);
+   % A0 = A_initial(:, 2);
 
     % Linear inequality constraints (empty for this problem)
-    A_eq = [];
-    b_eq = [];
+   % A_eq = [];
+   % b_eq = [];
     
     % Bounds for the second column of A, ensuring values are within +/- 30 of the initial values
-    lb = A_initial(:, 2) - 30;
-    ub = A_initial(:, 2) + 30;
+  %  lb = A_initial(:, 2) - 30;
+  %  ub = A_initial(:, 2) + 30;
 
     % Linear equality constraints (ensure the first column of A is unchanged)
     % We are not modifying the first column, so we can ignore this in the optimization
 
     % Options for the optimization (optional)
-    options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'sqp');
+  %  options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'sqp');
     
     % Solve the optimization problem
-    [A_optimized, fval] = fmincon(objectiveFunction, A0, [], [], A_eq, b_eq, lb, ub, [], options);
+  %  [A_optimized, fval] = fmincon(objectiveFunction, A0, [], [], A_eq, b_eq, lb, ub, [], options);
     
     % Update A with optimized values
-    A_final = A_initial;
-    A_final(:, 2) = A_optimized;
+  %  A_final = A_initial;
+  %  A_final(:, 2) = A_optimized;
 
     % Return the optimized sum of B
-    optimized_sum = fval;
-end
+   % optimized_sum = fval;
+%end
 
-function sumB = computeSumB(A, B_function)
-    % Compute matrix B based on A
-    B = B_function(A);
+%function sumB = computeSumB(A, B_function)
+%    % Compute matrix B based on A
+%    B = B_function(A);
     % Compute the sum of elements in B
-    sumB = sum(B, 'all');
-end
+%    sumB = sum(B, 'all');
+%end
