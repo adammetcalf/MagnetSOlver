@@ -145,7 +145,12 @@ classdef World
 
         % Get the torques and forces
         function ForceTorques = getForcesTorques(obj)
-            ForceTorques = obj.MagForceTorque; % #TODO, Sum forces and torques
+
+            %MagForceTorques = [Fx;Fy;Fz;Tx;Ty;Tz];
+
+            ForceTorques = obj.MagForceTorque; %  Magnetic Force Torque Matrix
+            ForceTorques(3,:) = ForceTorques(2,:) + obj.Fg; % magnetic force torque matrix + effects of gravity acting in Z direction
+
         end
 
     end
