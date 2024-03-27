@@ -18,7 +18,7 @@ classdef Population
         end
 
         %% Evolve
-        function obj = Evolve(obj,World)
+        function obj = Evolve(obj,World,Evolution)
 
             %init offspring
             offspringArray = obj.popArray;
@@ -26,15 +26,26 @@ classdef Population
             % Get 10 parents and perform crosssover
             offspringArray = getParents(obj, offspringArray, World);   
 
-            % Mutate
-            [obj,offSpringArray] = Mutate(obj,offSpringArray);
+            for i = min(floor((Evolution-1) / 10) + 1, 5)
+                % Mutate
+                [obj,offspringArray] = Mutate(obj,offspringArray, World, Evolution);
+            end
 
             % Combine popArray and Offsrping Array
-
+            obj.popArray = [obj.popArray,offspringArray];
 
 
             % CullArray
-            obj = CullArray(obj,World);
+            obj = CullArray2(obj,World);
+
+
+        end
+
+        % function to inject the best individual from a previous epoch
+        function obj = injectBest(obj, individual)
+
+            obj.popArray(1) = individual;
+            obj = sortFitness(obj);
 
         end
 
@@ -52,6 +63,17 @@ classdef Population
             fitness = obj.BestIndividual.getFitness();
 
         end
+
+        function popArray = getPopArray(obj)
+            %return popArray
+            popArray = obj.popArray;
+
+        end
+
+        function BestIndividual = getBestIndividual(obj)
+            BestIndividual = obj.BestIndividual;
+
+        end
         
     end
 
@@ -60,7 +82,7 @@ classdef Population
        function offspringArray = getParents(obj, offspringArray,World)
 
            % get a pair of parents until offspring array is fully replaced
-           for count = 1:length(offspringArray/2)
+           for count = 1:5
 
                %Get 2 parents
                mother = Parent(obj.popArray);
@@ -98,7 +120,7 @@ classdef Population
             %temporary array of just the fitness scores
             for i = 1:sizeSort
                 tempIndividual = obj.popArray(i);
-                fitnessArray(i) = tempIndividual.fitness;
+                fitnessArray(i) = tempIndividual.getFitness();
             end
 
             %sort fitnessArray (B is the array sorted lowest to highest, I
@@ -140,7 +162,7 @@ classdef Population
                 if CompRoute == CheckRoute
                     count = count+1; %if duplicate found, increase count
                     if count > 1 %always expect to find one duplicate, any more replace duplicate
-                        pop(innerIndex)= individual(World); %create an individual 
+                        pop(innerIndex)= Individual(World); %create an individual 
                     end
                 end
 
@@ -158,7 +180,7 @@ classdef Population
 
         end
 
-        %%%% #TODO: Check if this works and works more efficiently.
+        % MUCH MORE EFFICIENT CULL.
         function obj = CullArray2(obj, World)
             pop = obj.popArray;
             uniqueAngles = containers.Map('KeyType', 'char', 'ValueType', 'any');
@@ -177,7 +199,7 @@ classdef Population
         
             % Replace duplicates
             for i = find(duplicates)
-                pop(i) = individual(World); % Replace duplicate with new individual
+                pop(i) = Individual(World); % Replace duplicate with new individual
             end
             
             obj.popArray = pop; % Update the object's population array
@@ -188,7 +210,7 @@ classdef Population
 
 
         %Crossover Method
-        function [obj, child1, child2] = crossOver(obj, mother, father,World)
+        function [obj, child1, child2] = crossOver(obj, mother, father, World)
             % Determine the size of the parent matrices
             n = size(mother, 1);
             
@@ -217,43 +239,138 @@ classdef Population
         end
 
         %Mutation method
-        function [obj,offSpringArray] = Mutate(obj,offSpringArray,World)
+        function [obj,offSpringArray] = Mutate(obj,offSpringArray,World, Evolution)
            %this method performs mutation
 
            selection = randi([1 length(offSpringArray)],1,1); %select random offspring to mutate
            mutant = offSpringArray(selection); %get offspring as individual
            angles = mutant.getAngles(); %get angles
-           rLength = size(angles,1); %See how many rows there are
            
-           x = rand; 
-           if x >0.66 %perform mutation 50% of time
-               
-              
-               %choose 2 rows in matrix
-               choice = randi([1 rLength],1,2); 
-               while choice(1)==choice(2)
-                     choice(2) = randi([1 rLength],1,1); %ensure the choices are different elements
-               end
-               
-               %perform swap
-               y1 = angles(choice(1),:); 
-               y2 = angles(choice(2),:);
-               angles(choice(1),:) = y2;
-               angles(choice(2),:) = y1;
-               
-               mutant = mutant.updateAngles(angles,World); %update angles of individual
-               offSpringArray(selection) = mutant;
-               
-           elseif x >0.33 %invert some of the angles
-               
-               choice = randi([1 rLength],1,1); %select random row
-               angles(choice,2) = -angles(choice,2); %invert alpha value
-
-               mutant = mutant.updateAngles(angles,World); %update angles of individual
-               offSpringArray(selection) = mutant;
-           end
+           
+        % Generate a random integer between 1 and 6
+        mutationChoice = randi([1, 6]);
+        
+        % Choose the mutation method based on the random integer
+        switch mutationChoice
+            case 1
+                angles = obj.mutateSwapRows(angles);
+            case 2
+                angles = obj.mutateRandomResetting(angles);
+            case 3
+                angles = obj.mutateCreep(angles);
+            case 4
+                angles = obj.mutateGaussian(angles);
+            case 5
+                angles = obj.mutateInversion(angles);
+            case 6
+                angles = obj.mutateUniform(angles, Evolution); % Note: This one uses the Evolution parameter
+        end
+          
+           mutant = mutant.updateAngles(angles,World); %update angles of individual
+           offSpringArray(selection) = mutant;
            
         end
+
+        %% Mutations
+
+        % Scramble mutation
+        function angles = mutateSwapRows(obj,angles)
+
+            rLength = size(angles,1); %See how many rows there are
+            
+            %choose 2 rows in matrix
+            choice = randi([1 rLength],1,2); 
+            while choice(1)==choice(2)
+                 choice(2) = randi([1 rLength],1,1); %ensure the choices are different elements
+            end
+            
+            %perform swap
+            y1 = angles(choice(1),:); 
+            y2 = angles(choice(2),:);
+            angles(choice(1),:) = y2;
+            angles(choice(2),:) = y1;
+
+        end
+
+        % Random reset
+        function angles = mutateRandomResetting(obj,angles)
+
+            rLength = size(angles,1); %See how many rows there are
+
+            choice = randi([1 rLength],1,1); %select random row
+
+            % Randomly reset the angle of a selected row
+            angles(choice, 2) = rand()*360 - 180; % Values between -180 and 180 degrees
+        end
+
+        % Creep Mutation
+        function angles = mutateCreep(obj, angles)
+            % Adds a small random value to the selected angle within a predefined range
+            
+            rLength = size(angles,1); %See how many rows there are
+            choice = randi([1 rLength],1,1); %select random row
+            creepRange = 30;
+
+            creepValue = (rand()*2*creepRange) - creepRange; % Creep range defines the max change
+            angles(choice, 2) = mod(angles(choice, 2) + creepValue, 360);
+            
+            if angles(choice, 2) > 180
+                angles(choice, 2) = angles(choice, 2) - 360;
+            end
+
+        end
+
+        % Gaussian Mutation
+        function angles = mutateGaussian(obj, angles)
+            % Adds a Gaussian-distributed random value to the selected angle
+
+            stdDev = 60;
+
+            rLength = size(angles,1); %See how many rows there are
+            choice = randi([1 rLength],1,1); %select random row
+
+            gaussValue = randn()*stdDev;
+            angles(choice, 2) = mod(angles(choice, 2) + gaussValue, 360);
+            if angles(choice, 2) > 180
+                angles(choice, 2) = angles(choice, 2) - 360;
+            end
+        end
+
+        % Inversion Mutation
+        function angles = mutateInversion(obj, angles)
+            % Invert the order of rows within a selected segment
+
+            rLength = size(angles,1); %See how many rows there are
+            
+            %choose 2 rows in matrix
+            choice = randi([1 rLength],1,2); 
+            while choice(1)==choice(2)
+                 choice(2) = randi([1 rLength],1,1); %ensure the choices are different elements
+            end
+
+            if choice(1) < choice(2)
+                angles(choice(1):choice(2), :) = flipud(angles(choice(1):choice(2), :));
+            end
+        end
+
+        % Uniform Mutation
+        function angles = mutateUniform(obj, angles, Evolution)
+
+            mutationProb = 0.40; % 40% chance
+
+            % Change the angles in all rows with a certain probability
+            for row = 1:size(angles, 1)
+                if rand() < mutationProb
+                    angles(row, 2) = rand()*360 - 180; % Values between -180 and 180 degrees
+                end
+            end
+        end
+
+
+
+
+
+
 
     end
 end

@@ -19,7 +19,7 @@ classdef Individual
             obj = determineFitness(obj, World); % measure fitness of this solution
         end
 
-        function obj = updateAngles(angles, World)
+        function obj = updateAngles(obj, angles, World)
 
             %Update joint angles
             obj.Angles = angles;
