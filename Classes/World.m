@@ -351,6 +351,24 @@ classdef World
             % Obtain the stiffness value
             stiffness = obj.Tentacle.getStiffness();
 
+            % Apply restoring force due to the stiffness
+            % #TODO revisit this method
+            restoringTorques = -(stiffness.*angles);
+
+            % Remove the final value since we will ba applying the moment
+            % as a force at the COM of each link (fence post, fence panel
+            % problem). Ie, the torque at joint 1 (origin) will be applied
+            % at the Link center of link 1.
+            %   0----x----0----x----0----
+            restoringTorques(end) = [];
+
+            %Get the tentacle Link positions and therefore lengths
+            LinkPos = obj.Tentacle.getLinks();
+            LinkLength = sqrt((LinkPos(1,1)-LinkPos(1,2))^2+(LinkPos(2,1)-LinkPos(2,2))^2+(LinkPos(3,1)-LinkPos(3,2))^2);
+
+            % Evaluate the force to apply to the link COM
+            restoringForces = restoringTorques.*LinkLength;
+
 
         end
 

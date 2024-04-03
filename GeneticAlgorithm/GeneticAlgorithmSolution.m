@@ -21,12 +21,20 @@ classdef GeneticAlgorithmSolution
 
             epoch = 0;
            
-            while epoch < 30
+            while epoch < 10
                 disp("Epoch: "+ num2str(epoch));
 
 
                 % perform 1 epoch of training
                 obj = obj.performEpoch();
+
+                % run optimisation if epoch is divisible by 5
+                if mod(epoch, 5) == 0 && epoch ~= 0
+
+                    % Optimise
+                    obj = obj.Optimise();
+                    
+                end
 
                 % increment epoch count
                 epoch = epoch+1;
@@ -64,7 +72,7 @@ classdef GeneticAlgorithmSolution
             Evolution = 0;
 
             convCheckCount =0;
-            while convCheckCount < 50  
+            while convCheckCount < 20  
                 
 
                 % Get the best individual
@@ -100,6 +108,45 @@ classdef GeneticAlgorithmSolution
             if popFit < oldFit
                 obj.bestIndividual = pop.getBestIndividual();
             end
+
+        end
+
+
+        % Optimisation
+        function obj = Optimise(obj)
+
+            %Get Best individual angles
+            angles = obj.bestIndividual.getAngles();
+
+            %Update World angles
+            obj.world = obj.world.UpDateAngles(angles);
+
+            %Create PoseSolver
+            poseSolver = PoseSolver(obj.world);
+
+            %optimise the angles
+            optimizedAngles = poseSolver.optimizeJoints();
+
+            % for the 1st extrem angle we find, set to 0
+            for i = 1:(size(optimizedAngles,1)-1)
+
+                if optimizedAngles(i,2) == 180 
+                    optimizedAngles(i,2) = 0;
+                    break
+                elseif optimizedAngles(i,2) == -180
+                    optimizedAngles(i,2) = 0;
+                    break
+                else
+
+                end
+
+            end
+
+            % Update Best individual with optimised angles
+            obj.bestIndividual = obj.bestIndividual.updateAngles(optimizedAngles,obj.world);
+
+            % Note that the best individual will be automatically injected
+            % into the population at the start of the next epoch
 
         end
 

@@ -27,6 +27,14 @@ classdef Individual
             obj = determineFitness(obj, World); % measure fitness of this solution
         end
 
+        % This function exisits to ensure that we don't end up at a local
+        % minima exactly oposite of the realistic field interaction
+        function obj = reverseAngleOne(obj)
+
+            obj.Angles(1,2) = -obj.Angles(1,2);
+
+        end
+
         %% Accessors
         function Angles = getAngles(obj)
             Angles = obj.Angles;
