@@ -21,12 +21,12 @@ classdef Population
         function obj = Evolve(obj,World,Evolution)
 
             %init offspring
-            offspringArray = obj.popArray;
+            offspringArray = [obj.popArray,obj.popArray];
 
             % Get 10 parents and perform crosssover
             offspringArray = getParents(obj, offspringArray, World);   
 
-            for i = min(floor((Evolution-1) / 10) + 1, 5)
+            for i = min(floor((Evolution-1) / 10) + 1, 8)
                 % Mutate
                 [obj,offspringArray] = Mutate(obj,offspringArray, World, Evolution);
             end
@@ -173,7 +173,7 @@ classdef Population
             end
 
             obj.popArray = pop;
-            newLength= ceil(length(pop)/2);
+            newLength= 10;
             
             obj = sortFitness(obj); % order from best to worst
             obj.popArray = obj.popArray(1,1:newLength); % Remove worst half
@@ -203,7 +203,7 @@ classdef Population
             end
             
             obj.popArray = pop; % Update the object's population array
-            newLength= ceil(length(pop)/2);
+            newLength= 10;
             obj = sortFitness(obj); % order from best to worst
             obj.popArray = obj.popArray(1,1:newLength); % Remove worst half
         end

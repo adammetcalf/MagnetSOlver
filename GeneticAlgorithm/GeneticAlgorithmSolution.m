@@ -20,8 +20,10 @@ classdef GeneticAlgorithmSolution
         function [obj, BestAngles] = Train(obj)
 
             epoch = 0;
+           
             while epoch < 30
                 disp("Epoch: "+ num2str(epoch));
+
 
                 % perform 1 epoch of training
                 obj = obj.performEpoch();

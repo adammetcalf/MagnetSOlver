@@ -7,6 +7,7 @@ classdef World
         Tentacle Tentacle;                      % Tentacle object
         MagForceTorque double;                  % Matrix to contain the Magnetic forces and torques on each link
         Fg double;                              % Gravitational force on each link
+        StiffnessEffects double;                % Matrix to contain the effects of stiffness on each joint
         PlotLength double;                      % Axis limits, related to tentacle length
 
         % Magnetic Properties
@@ -87,7 +88,7 @@ classdef World
         end
 
         %% Function to Plot
-        function obj = plotWorld(obj,PlotOrientationOn,MagField)
+        function obj = plotWorld(obj,PlotOrientationOn,MagField,figureNumber)
             
             %Get the tentacle Joint positions
             HGMs = obj.Tentacle.getHGMs();
@@ -105,12 +106,12 @@ classdef World
             end
 
             %Check if figure is open, and close if so
-            figHandle = findobj('Type', 'figure', 'Number', 1);
+            figHandle = findobj('Type', 'figure', 'Number', figureNumber);
                 if ~isempty(figHandle)
                     close(figHandle);
                 end
 
-            figure(1)
+            figure(figureNumber)
             plot3([jointPos(1,:)],...
                   [jointPos(2,:)],...
                   [jointPos(3,:)],...
@@ -335,6 +336,22 @@ classdef World
 
             %set any tiny elements to 0
             obj.Fg(abs(obj.Fg) < (1.0e-10)) = 0;
+        end
+
+        %function to evaluate the effects of joint stiffness
+        function obj = EvaluateStiffnes(obj)
+
+            % Get the joint angles
+            angles = obj.Tentacle.getJointAngles;
+
+            % Obtain only the alpha values, which is what we are actually
+            % interested in
+            angles = angles(:,2);
+
+            % Obtain the stiffness value
+            stiffness = obj.Tentacle.getStiffness();
+
+
         end
 
     end

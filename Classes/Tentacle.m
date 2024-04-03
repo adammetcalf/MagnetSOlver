@@ -11,7 +11,7 @@ classdef Tentacle
         Links double; %COM of each Link
         MagneticMoments double; % A Matrix of magnetic moments Associated with each Link.
         MomentStrength double; % The magnetic moment magnitude for each Link.
-        JointStiffness double; % Holds the joint stiffness value for each joint
+        JointStiffness double; % Holds the joint stiffness value (single value, not matrix)
         LinkMass double; % holds the mass of each link
         Angles double; %Holds the joint angles
     end
@@ -224,6 +224,8 @@ classdef Tentacle
                 Rotation = frame(1:3, 1:3);
 
                 % Define magnetic moment in local frame orientation
+                % #TODO adjust so the input isn't solely in local z
+                % direction
                 momentLocal = [0;0;obj.MomentStrength];
 
                 % Transform the magnetic moment to the global frame

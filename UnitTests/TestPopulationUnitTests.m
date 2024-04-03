@@ -87,7 +87,7 @@ classdef TestPopulationUnitTests < matlab.unittest.TestCase
 
             end
 
-            pop = pop.Evolve(world);
+            pop = pop.Evolve(world,25);
 
             %get population array
             popArray = pop.getPopArray();

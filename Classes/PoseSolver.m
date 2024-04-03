@@ -36,8 +36,8 @@ classdef PoseSolver
             angles=[obj.initialThetas,angles]; %form complete angles
             obj.World = obj.World.UpDateAngles(angles);  % Update the angles
             forcesTorques = obj.World.getForcesTorques(); 
-            forcesTorques = abs(forcesTorques);
-            cost = sum(forcesTorques,"all"); % Example cost function
+            cost = sum(((forcesTorques.*100).^2),"all");
+            
         end
 
     end

@@ -55,8 +55,8 @@ classdef Individual
             ForcesTorques = World.getForcesTorques();
 
             % Evaluate Fitness
-            ForcesTorques = abs(ForcesTorques);
-            obj.fitness = sum(ForcesTorques,"all");
+            %ForcesTorques = abs(ForcesTorques);
+            obj.fitness = sum(((ForcesTorques.*100).^2),"all");
         end
     end
 end
