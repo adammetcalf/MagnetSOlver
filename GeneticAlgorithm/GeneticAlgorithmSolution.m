@@ -28,13 +28,8 @@ classdef GeneticAlgorithmSolution
                 % perform 1 epoch of training
                 obj = obj.performEpoch();
 
-                % run optimisation if epoch is divisible by 5
-                if mod(epoch, 5) == 0 && epoch ~= 0
-
-                    % Optimise
-                    obj = obj.Optimise();
-                    
-                end
+                % Optimise best individual
+                obj = obj.Optimise();
 
                 % increment epoch count
                 epoch = epoch+1;
@@ -130,10 +125,10 @@ classdef GeneticAlgorithmSolution
             % for the 1st extrem angle we find, set to 0
             for i = 1:(size(optimizedAngles,1)-1)
 
-                if optimizedAngles(i,2) == 180 
+                if (optimizedAngles(i,2) >= 179) && (optimizedAngles(i,2) <= 181)
                     optimizedAngles(i,2) = 0;
                     break
-                elseif optimizedAngles(i,2) == -180
+                elseif (optimizedAngles(i,2) <= -179) && (optimizedAngles(i,2) >= -181)
                     optimizedAngles(i,2) = 0;
                     break
                 else
