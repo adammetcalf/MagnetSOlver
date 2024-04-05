@@ -4,11 +4,18 @@ clc;
 
 % Define world inputs
 JointAngles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0];
-Magdirection = [0,0,1;0,0,1;0,0,1;0,0,1;0,0,1;0,0,1];
+Magdirection = [0,0,0,0,0,0;0,0,0,0,0,0;1,1,1,-1,-1,-1];
 TentacleMagnetisation = 12;
 LinkLength = 0.01;
-HomogeneousField = [0,0,25e-3]; % Magnetic field strength in Tesla (25 mT) in +z direction
+HomogeneousField = [25e-3,0,0]; % Magnetic field strength in Tesla (25 mT) in +z direction
 MultipoleActive = false; % Include the magnetic effects of the tentacle links on the magentic field.
+
+% Define EPM
+location = [0.15;0;0];
+location2 = [0;0;-0.15];
+orientation = [1,0,0;0,1,0;0,0,1];
+magnet = ExternalEPM(location,orientation);
+magnet2 = ExternalEPM(location2,orientation);
 
 
 % Create World

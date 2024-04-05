@@ -157,6 +157,10 @@ classdef GeneticAlgorithmSolution
 
             end
 
+
+            % #TODO instead of assuming that this is the best indivudual (I
+            % have seen this ruin the training), inject this individual
+            % into the population at position 8 or 9.
             % Update Best individual with optimised angles
             obj.bestIndividual = obj.bestIndividual.updateAngles(optimizedAngles,obj.world);
 

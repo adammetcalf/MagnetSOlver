@@ -241,7 +241,7 @@ classdef Tentacle
 
                 % Define magnetic moment in local frame orientation
                 % #TODO adjust so the input isn't solely in local z-direction. Use obj.MagDirections
-                momentLocal = [0;0;obj.MomentStrength];
+                momentLocal = obj.MagDirections(:,i)*obj.MomentStrength;
 
                 % Transform the magnetic moment to the global frame
                 obj.MagneticMoments(:,i) = Rotation * momentLocal;
