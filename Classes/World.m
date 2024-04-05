@@ -5,10 +5,12 @@ classdef World
     properties (Access = public)
         Gravity double = -9.81;                 % Gravity definition
         Tentacle Tentacle;                      % Tentacle object
-        MagForceTorque double;                  % Matrix to contain the Magnetic forces and torques on each link
+        MagForceTorque double;                  % 6xn Matrix to contain the Magnetic forces and torques on each link
         Fg double;                              % Gravitational force on each link
-        StiffnessEffects double;                % Matrix to contain the effects of stiffness on each joint
+        StiffnessEffects double;                % 3xn Matrix to hold global components of force on each link for the stiffness effects
         PlotLength double;                      % Axis limits, related to tentacle length
+        initialAlpha double;                    % Initial angle of joint at origin, required for stiffness calculations
+        EPMs ExternalEPM;                       % An array of external EPMSs to account for
 
         % Magnetic Properties
         mu0 double = 4*pi*1e-7;                 % Permeability of free space
@@ -38,11 +40,16 @@ classdef World
     methods (Access = public)
 
         %% Constructor
-        function obj = World(LinkLength, Angles, Magnetisation, HomogeneousField,MultipoleActive)
+        function obj = World(LinkLength, Angles, Magnetisation, Magdirection, HomogeneousField, EPMs, MultipoleActive)
             %WORLD Construct an instance of World
 
+            % #TODO pass in a tentacle object rather than construct inside
+            % the world
             % Create a tentacle
-            obj.Tentacle = Tentacle(LinkLength,Angles,Magnetisation);
+            obj.Tentacle = Tentacle(LinkLength,Angles,Magnetisation,Magdirection);
+
+            % Inject starting angle of tentacle
+            obj.initialAlpha = Angles(1,2);
 
             % Get overall tentacle length
             obj.PlotLength = (size(Angles,1)+2)*LinkLength;
@@ -55,10 +62,20 @@ classdef World
             % Inject homegeneous field in case of re-initialisation
             obj.HomegeneousField = HomogeneousField;
 
+            % Inject whether to include the multipole expansion effects of
+            % the tenatle magnetics (ie, do the discretised magnets in the
+            % tentacle affect each other?)
             obj.IncludeMultiPole = MultipoleActive;
             
             % Create the meshgrid used for magnetic simulation
             [obj.x, obj.y, obj.z] = meshgrid(xLow:obj.xIncr:xHigh, yLow:obj.yIncr:yHigh, zLow:obj.zIncr:zHigh);
+
+            % populate EPMs if the construcor argument is not empty
+            if isempty(EPMs)
+                % Do nothing
+            else
+                obj.EPMs = EPMs;
+            end
 
             % Init magfield
             obj = obj.InitMagField();
@@ -68,6 +85,11 @@ classdef World
 
             % Evaluate Gravtiational Forces
             obj = EvaluateGravity(obj);
+
+            % Evaluate Stiffness effects
+            obj = EvaluateStiffness(obj);
+
+
 
         end
         
@@ -85,6 +107,9 @@ classdef World
 
             % Evaluate Gravtiational Forces
             obj = EvaluateGravity(obj);
+
+            % Evaluate Stiffness effects
+            obj = EvaluateStiffness(obj);
         end
 
         %% Function to Plot
@@ -148,9 +173,12 @@ classdef World
         function ForceTorques = getForcesTorques(obj)
 
             %MagForceTorques = [Fx;Fy;Fz;Tx;Ty;Tz];
+            %Fg = [Fz]
+            %StiffnessEffects = [Fx;Fy;Fz];
 
             ForceTorques = obj.MagForceTorque; %  Magnetic Force Torque Matrix
-            ForceTorques(3,:) = ForceTorques(2,:) + obj.Fg; % magnetic force torque matrix + effects of gravity acting in Z direction
+            ForceTorques(3,:) = ForceTorques(3,:) + obj.Fg; % Magnetic Force Torque Matrix + effects of gravity acting in Z direction
+            ForceTorques(1:3,:) = ForceTorques(1:3,:) + obj.StiffnessEffects; %Magnetic Force Torque Matrix + Stiffness matrix
 
         end
 
@@ -228,6 +256,27 @@ classdef World
             if obj.IncludeMultiPole
                 % Determine Magnetic contribution of each link
                 obj = DetermineMagneticContribution(obj);
+            end
+
+            if isempty(obj.EPMs)
+                % Do nothing
+            else
+                %for each EPM
+                for i=1:length(obj.EPMs)
+
+                    EPM = obj.EPMs(i);
+
+                    %get moment and position of the epm
+                    [Pos,Moment] = EPM.getMag();
+
+                    %evaluate magnetic field contribution of dipole
+                    [BxDipole,ByDipole,BzDipole] = calcFieldContribution(obj,Pos,Moment);
+
+                    % Update Overall Magnetic Field
+                    obj.Bx = obj.Bx + BxDipole;
+                    obj.By = obj.By + ByDipole;
+                    obj.Bz = obj.Bz + BzDipole;
+                end
             end
 
         end
@@ -339,7 +388,7 @@ classdef World
         end
 
         %function to evaluate the effects of joint stiffness
-        function obj = EvaluateStiffnes(obj)
+        function obj = EvaluateStiffness(obj)
 
             % Get the joint angles
             angles = obj.Tentacle.getJointAngles;
@@ -347,6 +396,11 @@ classdef World
             % Obtain only the alpha values, which is what we are actually
             % interested in
             angles = angles(:,2);
+
+            % Joint 1 (at the origin) must be offset from the initial
+            % value, since the initial value is used to orientate the
+            % tentacle at its 'rest' position
+            angles(1) = obj.initialAlpha-angles(1); % #TODO - account for 180 to -180 overlap?
 
             % Obtain the stiffness value
             stiffness = obj.Tentacle.getStiffness();
@@ -366,8 +420,34 @@ classdef World
             LinkPos = obj.Tentacle.getLinks();
             LinkLength = sqrt((LinkPos(1,1)-LinkPos(1,2))^2+(LinkPos(2,1)-LinkPos(2,2))^2+(LinkPos(3,1)-LinkPos(3,2))^2);
 
-            % Evaluate the force to apply to the link COM
-            restoringForces = restoringTorques.*LinkLength;
+            % Evaluate the force to apply to the link COM (which is half of
+            % a linklength away from the joint)
+            restoringForces = restoringTorques.*(LinkLength/2);
+
+            % NOTE: These restoring forces are currently just a magnitude, the
+            % direction to apply them locally is not yet established
+
+            % Get Link Frames
+            Linkframes = obj.Tentacle.getLinkHGMs();
+           
+            % get the global x,y,z components of the global force due to
+            % stiffness
+            for i = 1:size(Linkframes,3)
+                
+                localForceDirection = [0; 1; 0]; % rotate about local y axis (because alpha angle)
+                localForceMagnitude = restoringForces(i); % The calculated force magnitude
+                localForce = localForceDirection * localForceMagnitude;
+                
+                % Homogeneous representation of local force
+                localForceHom = [localForce; 0]; % Append 0 for homogeneous representation
+                
+                % Transform the force vector to global coordinates using the link's HTM
+                globalForceHom = Linkframes(:,:,i) * localForceHom;
+                
+                % Extract global force vector (discard the homogeneous coordinate)
+                obj.StiffnessEffects(:,i) = globalForceHom(1:3);
+                
+            end
 
 
         end

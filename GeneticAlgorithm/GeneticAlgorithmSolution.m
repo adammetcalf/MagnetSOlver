@@ -17,13 +17,19 @@ classdef GeneticAlgorithmSolution
 
         end
 
-        function [obj, BestAngles] = Train(obj)
+        function BestAngles = Train(obj)
+                    
+            %init epoch count
+            epoch = 0;        
+            
+            % init angle change count
+            AngleNoChange = 0;
 
-            epoch = 0;
-           
-            while epoch < 10
+            while ((epoch < 10) && (AngleNoChange <= 3))
                 disp("Epoch: "+ num2str(epoch));
 
+                % Best angles at start of epoch
+                AngleStart = obj.bestIndividual.getAngles();
 
                 % perform 1 epoch of training
                 obj = obj.performEpoch();
@@ -33,10 +39,24 @@ classdef GeneticAlgorithmSolution
 
                 % increment epoch count
                 epoch = epoch+1;
+
+                % Best angles at end of epoch
+                AngleEnd = obj.bestIndividual.getAngles();
+
+                % Compare best angles at start and end of epoch
+                if AngleStart == AngleEnd
+                    AngleNoChange = AngleNoChange+1;
+                else
+                    AngleNoChange =0;
+                end
+
+                disp(AngleNoChange);
+
             end
             
+            % Ensure that best angles have propogated through (probably
+            % unnecessary)
             BestAngles = obj.bestIndividual.getAngles();
-
 
         end
         
@@ -93,7 +113,7 @@ classdef GeneticAlgorithmSolution
             end 
 
             % End of the evolution cycles for this epoch (ie no improvement
-            % for 50 consequtive evolutions). 
+            % for 20 consequtive evolutions). 
 
             %update the best individual
             popBest = pop.getBestIndividual();

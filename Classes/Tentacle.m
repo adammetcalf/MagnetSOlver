@@ -1,15 +1,18 @@
 classdef Tentacle
-    % This is a tentacle composed of joints 
-    % #TODO update this description
-    % after moment intergration etc
+    % This is a tentacle composed of joints and magnetic moments. The
+    % tenatcle positions (joints and links) is evaluated using homogeneous
+    % transfomration matrices and also contains the physical
+    % parameters/material properties
     
     %% Private Properties
     properties (Access = private)
         Joints Joint; % An array of joint objects
         HGMs double; % A matrix of the homogenous transfomration matrices
+        LinkHGMs double % A matrix of the homogeneous transformation matrices for each link.
         Jacobean double; % the Jacobean matrix for this tentacle.
         Links double; %COM of each Link
         MagneticMoments double; % A Matrix of magnetic moments Associated with each Link.
+        MagDirections double; % A Matrix of local magnetic moment directions associated with each link
         MomentStrength double; % The magnetic moment magnitude for each Link.
         JointStiffness double; % Holds the joint stiffness value (single value, not matrix)
         LinkMass double; % holds the mass of each link
@@ -21,14 +24,19 @@ classdef Tentacle
 
         %% Constructor
         % Constructor
-        function obj = Tentacle(LinkLength,Angles,Magnetisation)
+        function obj = Tentacle(LinkLength,Angles,Magnetisation,MagDirections)
             %TENTACLE Construct an instance of Tentacle
 
             obj.Angles = Angles;
+
+            obj.MagDirections = MagDirections;
             
             % Create n Joints, where n is the number of rows in the
             % provided 'Angles'
             for i=1:size(Angles,1)
+
+                % Note: A joint is defined by a denavit hartenberg frame.
+                %joint = Joint(theta,alpha,a,d)
 
                 if i == 1
                     % Joint1 is at origin, has no length
@@ -57,8 +65,11 @@ classdef Tentacle
             % Obtain Moment Magnitude of each Link.
             obj.MomentStrength = Magnetisation/(size(Angles,1)-1);
 
-            % Evaluate Homogeneous Transformation Matrices
+            % Evaluate Homogeneous Transformation Matrices of joints
             obj = EvaluateHGM(obj);
+
+            % Evaluate of Homogeneous Transformation Matrices links
+            obj = GetCOM(obj);
 
             % Evaluate Jacobean Matrix
             obj = EvaluateJacobean(obj);
@@ -89,6 +100,9 @@ classdef Tentacle
 
             % Evaluate Homogeneous Transformation Matrices
             obj = EvaluateHGM(obj);
+     
+            % Evaluate of Homogeneous Transformation Matrices links
+            obj = GetCOM(obj);
     
             % Evaluate Jacobean Matrix
             obj = EvaluateJacobean(obj);
@@ -111,7 +125,7 @@ classdef Tentacle
         end
 
         function Links = getLinks(obj)
-            % Accessor to retrieve the private property HGMs
+            % Accessor to retrieve the private property link positions
             Links = obj.Links;
         end
 
@@ -133,8 +147,13 @@ classdef Tentacle
         %get the joint angles
         function Angles = getJointAngles(obj)
             Angles = obj.Angles;
-
         end
+
+        % get the link HGMS
+        function LinkHGMs = getLinkHGMs(obj)
+            LinkHGMs = obj.LinkHGMs;
+        end
+
     end
 
     %% Private methods
@@ -208,14 +227,11 @@ classdef Tentacle
         % direction and location) for each Link
         function obj = EvaluateMagMoments(obj)
             
-            %Get COMs of each link for applying the moment
-            LinkCOMFrames = GetCOM(obj);
-
             %for each linkCOMframe, work out moment
-            for i = 1:size(LinkCOMFrames,3)
+            for i = 1:size(obj.LinkHGMs,3)
                 
                 % Obtain HGM
-                frame = LinkCOMFrames(:,:,i);
+                frame = obj.LinkHGMs(:,:,i);
 
                 % Populate links matrix
                 obj.Links(:,i) = frame(1:3,4);
@@ -224,8 +240,7 @@ classdef Tentacle
                 Rotation = frame(1:3, 1:3);
 
                 % Define magnetic moment in local frame orientation
-                % #TODO adjust so the input isn't solely in local z
-                % direction
+                % #TODO adjust so the input isn't solely in local z-direction. Use obj.MagDirections
                 momentLocal = [0;0;obj.MomentStrength];
 
                 % Transform the magnetic moment to the global frame
@@ -237,7 +252,7 @@ classdef Tentacle
         end
 
         % Function to evaluate the COM of each Link
-        function LinkCOMFrames = GetCOM(obj)
+        function obj = GetCOM(obj)
 
             % extract start and end HGMs
             for i=1:(length(obj.Joints)-1)
@@ -250,10 +265,10 @@ classdef Tentacle
                 midPoint = (P1 + P2) / 2;
 
                 % Copy start frame (for correct orientation)
-                LinkCOMFrames(:,:,i) = obj.HGMs(:,:,i);
+                obj.LinkHGMs(:,:,i) = obj.HGMs(:,:,i);
 
                 %Update Postion
-                LinkCOMFrames(1:3,4,i) = midPoint;
+                obj.LinkHGMs(1:3,4,i) = midPoint;
 
             end
 
