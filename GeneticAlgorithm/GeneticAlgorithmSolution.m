@@ -4,6 +4,7 @@ classdef GeneticAlgorithmSolution
     properties (Access = private)
         world World;
         bestIndividual Individual;
+        NextBestIndividual Individual;
     end
     
     methods (Access = public)
@@ -14,6 +15,7 @@ classdef GeneticAlgorithmSolution
             % init variables
             obj.world = world;
             obj.bestIndividual = Individual(world);
+            obj.NextBestIndividual = Individual(world);
 
         end
 
@@ -71,7 +73,7 @@ classdef GeneticAlgorithmSolution
             pop = Population(obj.world);
             
             %inject best individual from previous epoch
-            pop = pop.injectBest(obj.bestIndividual);
+            pop = pop.injectBest(obj.bestIndividual, obj.NextBestIndividual);
 
             % Perform the evolution cycles
             obj = obj.performEvolution(pop);
@@ -130,6 +132,10 @@ classdef GeneticAlgorithmSolution
         % Optimisation
         function obj = Optimise(obj)
 
+            % update next best as best. Both will be injected into the
+            % population for the next epoch.
+            obj.NextBestIndividual = obj.bestIndividual;
+
             %Get Best individual angles
             angles = obj.bestIndividual.getAngles();
 
@@ -142,25 +148,20 @@ classdef GeneticAlgorithmSolution
             %optimise the angles
             optimizedAngles = poseSolver.optimizeJoints();
 
-            % for the 1st extrem angle we find, set to 0
-            for i = 1:(size(optimizedAngles,1)-1)
+            % Set any extreme angles to  zero (unless its
+            % Joint0). This prevents 'folding' of the tentacle.
+            for i = 1:(size(optimizedAngles,1)-2)
 
-                if (optimizedAngles(i,2) >= 179) && (optimizedAngles(i,2) <= 181)
-                    optimizedAngles(i,2) = 0;
-                    break
-                elseif (optimizedAngles(i,2) <= -179) && (optimizedAngles(i,2) >= -181)
-                    optimizedAngles(i,2) = 0;
-                    break
+                if (optimizedAngles(i+1,2) >= 179) && (optimizedAngles(i+1,2) <= 181)
+                    optimizedAngles(i+1,2) = 0;
+                elseif (optimizedAngles(i+1,2) <= -179) && (optimizedAngles(i+1,2) >= -181)
+                    optimizedAngles(i+1,2) = 0;   
                 else
 
                 end
 
             end
 
-
-            % #TODO instead of assuming that this is the best indivudual (I
-            % have seen this ruin the training), inject this individual
-            % into the population at position 8 or 9.
             % Update Best individual with optimised angles
             obj.bestIndividual = obj.bestIndividual.updateAngles(optimizedAngles,obj.world);
 

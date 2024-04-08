@@ -41,11 +41,12 @@ classdef Population
 
         end
 
-        % function to inject the best individual from a previous epoch
-        function obj = injectBest(obj, individual)
+        % function to inject the best individuals from a previous epoch
+        function obj = injectBest(obj, individual,NextIndividual)
 
-            %inject the best individual from previous epoch
+            %inject the best individuals from previous epoch
             obj.popArray(1) = individual;
+            obj.popArray(2) = NextIndividual;
 
             % Inject individual with reversed angle 1 at end of population
             % (in case of local minima)
@@ -55,9 +56,6 @@ classdef Population
             obj = sortFitness(obj);
 
         end
-
-        % #TODO fucntion to take best individual and rotate by 180 degrees
-        % at joint 1 incase local minima
 
 
         %% Accessors

@@ -178,7 +178,7 @@ classdef World
 
             ForceTorques = obj.MagForceTorque; %  Magnetic Force Torque Matrix
             ForceTorques(3,:) = ForceTorques(3,:) + obj.Fg; % Magnetic Force Torque Matrix + effects of gravity acting in Z direction
-            ForceTorques(1:3,:) = ForceTorques(1:3,:) + obj.StiffnessEffects; %Magnetic Force Torque Matrix + Stiffness matrix
+            %ForceTorques(1:3,:) = ForceTorques(1:3,:) + obj.StiffnessEffects; %Magnetic Force Torque Matrix + Stiffness matrix
 
         end
 
