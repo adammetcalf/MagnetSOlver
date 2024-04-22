@@ -14,8 +14,10 @@ fig = simpleApp; % This will open the GUI
 waitfor(fig);
 
 % Check the global variable for the result
-if isempty(result)
-    disp('No result was set.');
-else
-    disp(['Result from GUI: ', result]);
-end
+%if isempty(result)
+%    disp('No result was set.');
+%else
+%    disp(['Result from GUI: ', result]);
+%end
+
+result
