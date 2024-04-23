@@ -40,18 +40,18 @@ classdef World
     methods (Access = public)
 
         %% Constructor
-        function obj = World(LinkLength, Angles, Magnetisation, Magdirection, HomogeneousField, EPMs, MultipoleActive)
+        function obj = World(Tentacle, HomogeneousField, EPMs, MultipoleActive)
             %WORLD Construct an instance of World
 
-            % #TODO pass in a tentacle object rather than construct inside
-            % the world
-            % Create a tentacle
-            obj.Tentacle = Tentacle(LinkLength,Angles,Magnetisation,Magdirection);
+            % Inject the tentacle
+            obj.Tentacle = Tentacle;
 
             % Inject starting angle of tentacle
+            Angles = obj.Tentacle.getJointAngles();
             obj.initialAlpha = Angles(1,2);
 
             % Get overall tentacle length
+            LinkLength = obj.Tentacle.getLinkLength();
             obj.PlotLength = (size(Angles,1)+2)*LinkLength;
 
             % Create the magnetic field template

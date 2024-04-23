@@ -2,7 +2,7 @@ function fig = simpleApp
 % SIMPLEAPP 
 
 % Create the global variable to store the result
-global result;
+global tentacleResult;
 
 %% Create UI Components
 
@@ -11,8 +11,8 @@ fig = uifigure;
 fig.Name = "Design Tentacle";
 
 % Manage app layout
-gl = uigridlayout(fig,[4 5]);  % 2 rows, 5 columns
-gl.RowHeight = {30, 120, '4x', 30};  % Set second row to fixed height for the table
+gl = uigridlayout(fig,[4 5]);  % 5 rows, 5 columns
+gl.RowHeight = {30, 150, '4x', 30};  % Set second row to fixed height for the table
 gl.ColumnWidth = {'1x', '1x', '1x', '1x', '1x' };
 
 % Create UI components
@@ -25,8 +25,6 @@ btnReset = uibutton(gl, 'push','Text', 'Reset');                        % Add a 
 ax = uiaxes(gl);                                                        % Axes to hold the tentacle
 table = uitable(gl, "CellEditCallback",@(src,event) TableValueChanged(src,event,fig));
 
-% create tentacle object
-%tentacle = Tentacle(LinkLength,Angles,Magnetisation,MagDirections);
 
 % Define the 'number of links' input field
 NumLinks.Value = 1;                                                     % Always at least 1 link
@@ -41,10 +39,10 @@ LinkLength.Limits = [0.001 0.1];                                        % Limit 
 
 % Define the table
 s = uistyle("HorizontalAlignment","center");
-table.Data = zeros(3, NumLinks.Value);
-table.Data(3,:) = 1;
+table.Data = zeros(4, NumLinks.Value);
+table.Data(3:4,:) = 1;
 table.ColumnName = arrayfun(@(i) sprintf('Link %d', i), 1:NumLinks.Value, 'UniformOutput', false);
-table.RowName = {'X', 'Y', 'Z'};
+table.RowName = {'X', 'Y', 'Z','NdFeb?'};
 for i = 1:NumLinks.Value
     columnEdit(i) = true;
 end
@@ -55,13 +53,13 @@ addStyle(table,s)
 Angles = zeros(NumLinks.Value+1,2);
 Angles(1,:) = [90,90];
 
-result = Angles;
+tentacleResult = Angles;
 
 % arbitrary magentisation
 Magnetisation = 2*NumLinks.Value;
 
 % create tentacle
-tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data);
+tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data(1:3,:));
 
 
 
@@ -92,7 +90,6 @@ btnReset.Layout.Row = 4;
 btnReset.Layout.Column = [1 2];
 
 % Configure UI component appearance
-%surf(ax, peaks);
 plotTentacle(fig);
 
 %% Callbacks
@@ -101,8 +98,6 @@ plotTentacle(fig);
 btnClose.ButtonPushedFcn = {@closeApp, fig};
 
     function closeApp(src, event, fig)
-        % Store result in the global variable
-        %result = table.Data;
         delete(fig); % Close the figure and delete it
     end
 
@@ -115,23 +110,26 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
         NumLinks.Value = 1;
 
         % repopulate table, evaluate everything and create/overwrite tentacle
-        table.Data = zeros(3, NumLinks.Value);
-        table.Data(3,:) = 1;
+        table.Data = zeros(4, NumLinks.Value);
+        table.Data(3:4,:) = 1;
         table.ColumnName = arrayfun(@(i) sprintf('Link %d', i), 1:NumLinks.Value, 'UniformOutput', false);
 
         % create links 
         Angles = zeros(NumLinks.Value+1,2);
         Angles(1,:) = [90,90];
 
-        result = Angles;
+        tentacleResult = Angles;
         
+        % #TODO sort out the arbitrary magentisation profile
         % arbitrary magentisation
         Magnetisation = 2*NumLinks.Value;
         
         % create tentacle
-        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data);
+        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data(1:3,:));
 
         plotTentacle(fig);
+
+        tentacleResult = tentacle;
 
     end
 
@@ -139,23 +137,25 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
     function NumLinksValueChanged(src,event,fig)
 
         % repopulate table, evaluate everything and create/overwrite tentacle
-        table.Data = zeros(3, NumLinks.Value);
-        table.Data(3,:) = 1;
+        table.Data = zeros(4, NumLinks.Value);
+        table.Data(3:4,:) = 1;
         table.ColumnName = arrayfun(@(i) sprintf('Link %d', i), 1:NumLinks.Value, 'UniformOutput', false);
 
         % create links 
         Angles = zeros(NumLinks.Value+1,2);
         Angles(1,:) = [90,90];
 
-        result = Angles;
+        tentacleResult = Angles;
         
         % arbitrary magentisation
         Magnetisation = 2*NumLinks.Value;
         
         % create tentacle
-        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data);
+        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data(1:3,:));
 
         plotTentacle(fig);
+
+        tentacleResult = tentacle;
 
     end
 
@@ -165,58 +165,60 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
         Angles = zeros(NumLinks.Value+1,2);
         Angles(1,:) = [90,90];
 
-        result = Angles;
+        tentacleResult = Angles;
         
         % arbitrary magentisation
         Magnetisation = 2*NumLinks.Value;
         
         % create tentacle
-        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data);
+        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data((1:3),:));
 
         plotTentacle(fig);
+
+        tentacleResult = tentacle;
 
     end
 
 %function to plot the tentacle
     function plotTentacle(fig)
-    % Retrieve the tentacle Joint positions
-    HGMs = tentacle.getHGMs();  % Assuming getHGMs returns homogeneous transformation matrices for all joints
+        % Retrieve the tentacle Joint positions
+        HGMs = tentacle.getHGMs();  % Assuming getHGMs returns homogeneous transformation matrices for all joints
+        
+        % Extract joint positions from the transformation matrices
+        jointPos = zeros(3, size(HGMs, 3));
+        for j = 1:size(HGMs, 3)
+            jointPos(:, j) = HGMs(1:3, 4, j);  
+        end
+        
+        % Retrieve the tentacle Link positions
+        LinkPos = tentacle.getLinks();  % Assuming getLinks returns positions for links
     
-    % Extract joint positions from the transformation matrices
-    jointPos = zeros(3, size(HGMs, 3));
-    for j = 1:size(HGMs, 3)
-        jointPos(:, j) = HGMs(1:3, 4, j);  
-    end
+        % Define the plot extent based on the link length and number of links
+        PlotLength = LinkLength.Value * (NumLinks.Value + 2);
     
-    % Retrieve the tentacle Link positions
-    LinkPos = tentacle.getLinks();  % Assuming getLinks returns positions for links
-
-    % Define the plot extent based on the link length and number of links
-    PlotLength = LinkLength.Value * (NumLinks.Value + 2);
-
-    % Get magnetic moments
-    Moments = tentacle.getMagneticMoments();
-
-    % Plotting joint positions
-    plot3(ax, jointPos(1, :), jointPos(2, :), jointPos(3, :), ...
-          'ro-', 'MarkerSize', 4, 'MarkerFaceColor', 'r', 'LineWidth', 1);
-    hold(ax, 'on');  % Ensure that the plot does not clear existing figures
+        % Get magnetic moments
+        Moments = tentacle.getMagneticMoments();
     
-    % Plotting link positions
-    plot3(ax, LinkPos(1, :), LinkPos(2, :), LinkPos(3, :), ...
-          'bo', 'MarkerSize', 4, 'MarkerFaceColor', 'b');
-
-    % Plot Moments
-    PlotMagenticMoments(fig,LinkPos,Moments);
-
-    % Set axes properties
-    axis(ax, 'equal');
-    axis(ax, [-LinkLength.Value*2 PlotLength -LinkLength.Value*2 LinkLength.Value*2 -LinkLength.Value*2 LinkLength.Value*2]);
-    grid(ax, 'on');
-    xlabel(ax, 'X');
-    ylabel(ax, 'Y');
-    zlabel(ax, 'Z');
-    hold(ax, 'off');  % Release the hold to allow other plotting commands to function normally
+        % Plotting joint positions
+        plot3(ax, jointPos(1, :), jointPos(2, :), jointPos(3, :), ...
+              'ro-', 'MarkerSize', 4, 'MarkerFaceColor', 'r', 'LineWidth', 1);
+        hold(ax, 'on');  % Ensure that the plot does not clear existing figures
+        
+        % Plotting link positions
+        plot3(ax, LinkPos(1, :), LinkPos(2, :), LinkPos(3, :), ...
+              'bo', 'MarkerSize', 4, 'MarkerFaceColor', 'b');
+    
+        % Plot Moments
+        PlotMagenticMoments(fig,LinkPos,Moments);
+    
+        % Set axes properties
+        axis(ax, 'equal');
+        axis(ax, [-LinkLength.Value*2 PlotLength -LinkLength.Value*2 LinkLength.Value*2 -LinkLength.Value*2 LinkLength.Value*2]);
+        grid(ax, 'on');
+        xlabel(ax, 'X');
+        ylabel(ax, 'Y');
+        zlabel(ax, 'Z');
+        hold(ax, 'off');  % Release the hold to allow other plotting commands to function normally
     end
 
     %Function to plot the magnetic moments
@@ -245,19 +247,37 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
 
     function TableValueChanged(src,event,fig)
 
+        %Check for material
+        CheckNdFeb(fig);
+
         % create links 
         Angles = zeros(NumLinks.Value+1,2);
         Angles(1,:) = [90,90];
-
-        result = Angles;
         
         % arbitrary magentisation
         Magnetisation = 2*NumLinks.Value;
         
         % create tentacle
-        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data);
+        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data(1:3,:));
 
         plotTentacle(fig);
+
+        tentacleResult = tentacle;
+
+    end
+
+    function CheckNdFeb(fig)
+   % loop though row 4 of the table. If an element == 0, set rows
+   % 1,3 to 0
+
+       for j = 1:size(table.Data,1)
+           if table.Data(4,j) == 1
+              % Do nothing
+           else
+               table.Data(1:3,j) = 0;
+           end
+
+       end
 
     end
 

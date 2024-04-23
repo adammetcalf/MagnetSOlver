@@ -1,6 +1,6 @@
 classdef Tentacle
     % This is a tentacle composed of joints and magnetic moments. The
-    % tenatcle positions (joints and links) is evaluated using homogeneous
+    % tentacle positions (joints and links) is evaluated using homogeneous
     % transfomration matrices and also contains the physical
     % parameters/material properties
     
@@ -17,6 +17,7 @@ classdef Tentacle
         JointStiffness double; % Holds the joint stiffness value (single value, not matrix)
         LinkMass double; % holds the mass of each link
         Angles double; %Holds the joint angles
+        LinkLength double; %Holds the link length
     end
 
     %% Public Methods
@@ -26,6 +27,8 @@ classdef Tentacle
         % Constructor
         function obj = Tentacle(LinkLength,Angles,Magnetisation,MagDirections)
             %TENTACLE Construct an instance of Tentacle
+
+            obj.LinkLength = LinkLength;
 
             obj.Angles = Angles;
 
@@ -154,6 +157,11 @@ classdef Tentacle
             LinkHGMs = obj.LinkHGMs;
         end
 
+        % get the link Length
+        function LinkLength = getLinkLength(obj)
+            LinkLength = obj.LinkLength;
+        end
+
     end
 
     %% Private methods
@@ -239,8 +247,7 @@ classdef Tentacle
                 % Obtain rotation
                 Rotation = frame(1:3, 1:3);
 
-                % Define magnetic moment in local frame orientation
-                % #TODO adjust so the input isn't solely in local z-direction. Use obj.MagDirections
+                % Obtain local magnetic moment
                 momentLocal = obj.MagDirections(:,i)*obj.MomentStrength;
 
                 % Transform the magnetic moment to the global frame

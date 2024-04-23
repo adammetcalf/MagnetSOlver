@@ -13,11 +13,6 @@ fig = simpleApp; % This will open the GUI
 % Wait for the UI to close
 waitfor(fig);
 
-% Check the global variable for the result
-%if isempty(result)
-%    disp('No result was set.');
-%else
-%    disp(['Result from GUI: ', result]);
-%end
+
 
 result

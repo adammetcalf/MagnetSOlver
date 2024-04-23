@@ -3,15 +3,17 @@ classdef TestIndividualUnitTests < matlab.unittest.TestCase
     methods(Test)
         function constructor(testCase)
             % Define world inputs
-            JointAngles = [90,90;0,0;0,0;0,0;0,0;0,0;0,0;0,0;0,0];
-            Magdirection = [0,0,1;0,0,1;0,0,1;0,0,1;0,0,1;0,0,1];
+            JointAngles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0;0,0];
+            Magdirection = [0,0,0,0,0,0,0;0,0,0,0,0,0,0;-1,-1,-1,-1,-1,-1,-1];
             TentacleMagnetisation = 12;
             LinkLength = 0.01;
+
+            tentacle = Tentacle(LinkLength,JointAngles,TentacleMagnetisation,Magdirection);
             HomogeneousField = [0,0,25e-3]; % Magnetic field strength in Tesla (25 mT) in +z direction
             MultipoleActive = false; % Include the magnetic effects of the tentacle links on the magentic field.
             
             % Create World
-            world = World(LinkLength, JointAngles, TentacleMagnetisation, Magdirection ,HomogeneousField,[], MultipoleActive);
+            world = World(tentacle,HomogeneousField,[], MultipoleActive);
 
 
             %spawn World
@@ -22,15 +24,17 @@ classdef TestIndividualUnitTests < matlab.unittest.TestCase
         end
         function constructor2(testCase)
             % Define world inputs
-            JointAngles = [90,90;0,0;0,0;0,0;0,0;0,0;0,0;0,0;0,0];
-            Magdirection = [0,0,1;0,0,1;0,0,1;0,0,1;0,0,1;0,0,1];
+            JointAngles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0;0,0];
+            Magdirection = [0,0,0,0,0,0,0;0,0,0,0,0,0,0;-1,-1,-1,-1,-1,-1,-1];
             TentacleMagnetisation = 12;
             LinkLength = 0.01;
+
+            tentacle = Tentacle(LinkLength,JointAngles,TentacleMagnetisation,Magdirection);
             HomogeneousField = [0,0,25e-3]; % Magnetic field strength in Tesla (25 mT) in +z direction
             MultipoleActive = false; % Include the magnetic effects of the tentacle links on the magentic field.
             
             % Create World
-            world = World(LinkLength, JointAngles, TentacleMagnetisation,Magdirection, HomogeneousField,[], MultipoleActive);
+            world = World(tentacle,HomogeneousField,[], MultipoleActive);
 
 
             %spawn World
@@ -46,15 +50,17 @@ classdef TestIndividualUnitTests < matlab.unittest.TestCase
         end
         function updateAngles(testCase)
             % Define world inputs
-            JointAngles = [90,90;0,0;0,0;0,0;0,0;0,0;0,0;0,0;0,0];
-            Magdirection = [0,0,1;0,0,1;0,0,1;0,0,1;0,0,1;0,0,1];
+            JointAngles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0;0,0];
+            Magdirection = [0,0,0,0,0,0,0;0,0,0,0,0,0,0;-1,-1,-1,-1,-1,-1,-1];
             TentacleMagnetisation = 12;
             LinkLength = 0.01;
+
+            tentacle = Tentacle(LinkLength,JointAngles,TentacleMagnetisation,Magdirection);
             HomogeneousField = [0,0,25e-3]; % Magnetic field strength in Tesla (25 mT) in +z direction
             MultipoleActive = false; % Include the magnetic effects of the tentacle links on the magentic field.
             
             % Create World
-            world = World(LinkLength, JointAngles, TentacleMagnetisation, Magdirection, HomogeneousField,[], MultipoleActive);
+            world = World(tentacle,HomogeneousField,[], MultipoleActive);
 
 
             %spawn World

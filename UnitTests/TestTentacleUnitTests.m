@@ -4,7 +4,7 @@ classdef TestTentacleUnitTests < matlab.unittest.TestCase
         % Test constructor
         function constructor(testCase)
             angles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0];
-            Magdirection = [0,0,1;0,0,1;0,0,1;0,0,1;0,0,1;0,0,1];
+            Magdirection = [0,0,0,0,0,0,0;0,0,0,0,0,0,0;-1,-1,-1,-1,-1,-1,-1];
             tentacle = Tentacle(0.01,angles,12,Magdirection);
             anglesOut = tentacle.getJointAngles();
             testCase.verifyEqual(anglesOut,angles)
@@ -12,7 +12,7 @@ classdef TestTentacleUnitTests < matlab.unittest.TestCase
         %Test udpdate angles
         function UpdateAngles1(testCase)
             angles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0];
-            Magdirection = [0,0,1;0,0,1;0,0,1;0,0,1;0,0,1;0,0,1];
+            Magdirection = [0,0,0,0,0,0,0;0,0,0,0,0,0,0;-1,-1,-1,-1,-1,-1,-1];
             tentacle = Tentacle(0.01,angles,12,Magdirection);
             anglesOut = tentacle.getJointAngles();
             angles2 = [90,180;0,90;0,90;0,90;0,90;0,90;0,90];
@@ -23,7 +23,7 @@ classdef TestTentacleUnitTests < matlab.unittest.TestCase
         %Test udpdate angles
         function UpdateAngles2(testCase)
             angles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0];
-            Magdirection = [0,0,1;0,0,1;0,0,1;0,0,1;0,0,1;0,0,1];
+            Magdirection = [0,0,0,0,0,0,0;0,0,0,0,0,0,0;-1,-1,-1,-1,-1,-1,-1];
             tentacle = Tentacle(0.01,angles,12,Magdirection);
             anglesOut = tentacle.getJointAngles();
             angles2 = [90,180;0,90;0,90;0,90;0,90;0,90;0,90];

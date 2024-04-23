@@ -374,12 +374,6 @@ classdef Population
             end
         end
 
-
-
-
-
-
-
     end
 end
 
