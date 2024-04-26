@@ -161,6 +161,32 @@ classdef World
             hold off
         end
 
+        % Function to plot on specified axis (specifically on the UI)
+        function obj = plotWorldax(obj, ax)
+            % Plotting function with axes specified
+            HGMs = obj.Tentacle.getHGMs();
+            for i = 1:size(HGMs,3)
+                jointPos(:,i) = HGMs(1:3,4,i);  
+            end
+        
+            LinkPos = obj.Tentacle.getLinks();
+        
+        
+            % Plot joints and links
+            plot3(ax, jointPos(1,:), jointPos(2,:), jointPos(3,:), 'ro-', 'MarkerSize', 4, 'MarkerFaceColor', 'r', 'LineWidth', 1);
+            hold(ax, 'on');
+            plot3(ax, LinkPos(1,:), LinkPos(2,:), LinkPos(3,:), 'bo-', 'MarkerSize', 4, 'MarkerFaceColor', 'b');
+                
+            axis(ax, 'equal');
+            xlim(ax, [-obj.PlotLength obj.PlotLength]);
+            ylim(ax, [-obj.PlotLength obj.PlotLength]);
+            zlim(ax, [-obj.PlotLength obj.PlotLength]);
+            grid(ax, 'on');
+            xlabel(ax, 'X');
+            ylabel(ax, 'Y');
+            zlabel(ax, 'Z');
+            hold(ax, 'off');
+        end
 
         %% Accessors
         %get the joint angles

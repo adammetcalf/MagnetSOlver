@@ -5,12 +5,14 @@ classdef Population
         popArray Individual; %Array of Individuals
         BestIndividual Individual; %Fittest individual in the population
         AverageFitness double; %Mean fitness of the population
+        CurrentMutation;
     end
     
    methods (Access = public)
 
         %% Constructor
-        function obj = Population(World)
+        function obj = Population(World,CurrentMutation)
+            obj.CurrentMutation = CurrentMutation;
             for count =1:10
                 obj.popArray(count) = Individual(World); %create an individual, and place into the population            
             end
@@ -262,16 +264,28 @@ classdef Population
         switch mutationChoice
             case 1
                 angles = obj.mutateSwapRows(angles);
+                obj.CurrentMutation.Text = 'Swap Rows';
+                drawnow();
             case 2
                 angles = obj.mutateRandomResetting(angles);
+                obj.CurrentMutation.Text = 'Random Reset';
+                drawnow();
             case 3
                 angles = obj.mutateCreep(angles);
+                obj.CurrentMutation.Text = 'Creep';
+                drawnow();
             case 4
                 angles = obj.mutateGaussian(angles);
+                obj.CurrentMutation.Text = 'Guassian';
+                drawnow();
             case 5
                 angles = obj.mutateInversion(angles);
+                obj.CurrentMutation.Text = 'Inversion';
+                drawnow();
             case 6
                 angles = obj.mutateUniform(angles, Evolution); % Note: This one uses the Evolution parameter
+                obj.CurrentMutation.Text = 'Uniform Mutation';
+                drawnow();
         end
           
            mutant = mutant.updateAngles(angles,World); %update angles of individual

@@ -5,17 +5,30 @@ classdef GeneticAlgorithmSolution
         world World;
         bestIndividual Individual;
         NextBestIndividual Individual;
+        fig;
+        EpochLabel;
+        EvoLabel;
+        FitnessLabel;
+        ax;
+        CurrentMutation;
     end
     
     methods (Access = public)
         %% Constructor
-        function obj = GeneticAlgorithmSolution(world)
+        function obj = GeneticAlgorithmSolution(world,fig, EpochLabel, EvoLabel, FitnessLabel,ax,CurrentMutation)
             %GENETICALGORITHMSOLUTION Construct an instance of this class
 
             % init variables
             obj.world = world;
             obj.bestIndividual = Individual(world);
             obj.NextBestIndividual = Individual(world);
+            obj.fig = fig;
+            obj.EpochLabel = EpochLabel;
+            obj.EvoLabel = EvoLabel;
+            obj.FitnessLabel = FitnessLabel;
+            obj.ax = ax;
+            obj.CurrentMutation = CurrentMutation;
+
 
         end
 
@@ -29,6 +42,8 @@ classdef GeneticAlgorithmSolution
 
             while ((epoch < 10) && (AngleNoChange <= 3))
                 disp("Epoch: "+ num2str(epoch));
+                obj.EpochLabel.Text = num2str(epoch);
+                drawnow();
 
                 % Best angles at start of epoch
                 AngleStart = obj.bestIndividual.getAngles();
@@ -70,7 +85,7 @@ classdef GeneticAlgorithmSolution
         function obj = performEpoch(obj)
             
             % initialise epoch
-            pop = Population(obj.world);
+            pop = Population(obj.world,obj.CurrentMutation);
             
             %inject best individual from previous epoch
             pop = pop.injectBest(obj.bestIndividual, obj.NextBestIndividual);
@@ -92,8 +107,8 @@ classdef GeneticAlgorithmSolution
             while convCheckCount < 20  
                 
 
-                % Get the best individual
-                [~, fitness, ~] = pop.getBest();
+                % Get the best individual fitnesss
+                [Angles, fitness, ~] = pop.getBest();
 
                 % Evolve the population
                 pop = pop.Evolve(obj.world, Evolution);
@@ -110,8 +125,18 @@ classdef GeneticAlgorithmSolution
                 end
                 Evolution = Evolution+1;
 
-                disp("Evolution: "+ num2str(Evolution)+ ", Fitness: "+ num2str(fitness2));
+                % create new world for the best individual angles
+                world2 = obj.world;
 
+                % Update world2 with best individual angles
+                world2 = world2.UpDateAngles(Angles);
+
+                world2 = world2.plotWorldax(obj.ax);
+
+                disp("Evolution: "+ num2str(Evolution)+ ", Fitness: "+ num2str(fitness2));
+                obj.EvoLabel.Text = num2str(Evolution);
+                obj.FitnessLabel.Text = num2str(fitness2);
+                drawnow();
             end 
 
             % End of the evolution cycles for this epoch (ie no improvement
@@ -131,6 +156,9 @@ classdef GeneticAlgorithmSolution
 
         % Optimisation
         function obj = Optimise(obj)
+
+            obj.CurrentMutation.Text = 'Optimisation';
+            drawnow();
 
             % update next best as best. Both will be injected into the
             % population for the next epoch.

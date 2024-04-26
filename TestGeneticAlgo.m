@@ -6,6 +6,7 @@ clc;
 %%  Define Tentacle using UI
 % Declare the global variable to retrieve the result
 global tentacleResult;
+global BestAngles;
 
 % Initialize or clear the global variable
 tentacleResult = [];
@@ -34,9 +35,14 @@ world = World(tentacleResult, HomogeneousField,[], MultipoleActive);
 % Plot the world
 world = world.plotWorld(false,false,1);
 
-GeneticAlgo = GeneticAlgorithmSolution(world);
+%%%%% Lgecay - from before UI integration
+%GeneticAlgo = GeneticAlgorithmSolution(world);
+%BestAngles = GeneticAlgo.Train();
 
-BestAngles = GeneticAlgo.Train();
+fig = GAapp(world);
+
+% Wait for the UI to close
+waitfor(fig);
 
 % Update world with new angles
 world = world.UpDateAngles(BestAngles);
@@ -66,3 +72,5 @@ FT = world.getForcesTorques();
 
 % #TODO The iron should be considered - magnetissation? 
 
+% #TODO The tentacle creation UI should place the tentacle in vetrically
+% downwards position before passing on to the next stage of the code
