@@ -98,6 +98,22 @@ plotTentacle(fig);
 btnClose.ButtonPushedFcn = {@closeApp, fig};
 
     function closeApp(src, event, fig)
+
+        % create links 
+        Angles = zeros(NumLinks.Value+1,2);
+        Angles(1,:) = [90,180];
+
+        tentacleResult = Angles;
+        
+        % #TODO sort out the arbitrary magentisation profile
+        % arbitrary magentisation
+        Magnetisation = 2*NumLinks.Value;
+        
+        % create tentacle
+        tentacle = Tentacle(LinkLength.Value,Angles,Magnetisation,table.Data(1:3,:));
+
+        tentacleResult = tentacle;
+
         delete(fig); % Close the figure and delete it
     end
 

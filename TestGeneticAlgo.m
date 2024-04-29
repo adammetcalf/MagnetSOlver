@@ -53,8 +53,7 @@ world = world.plotWorld(false,false,2);
 FT = world.getForcesTorques();
 
 
-% #TODO - Stiffness is really fucking up the solution - seems to rotate
-% into the opposite direction of what we are expecting 
+% #TODO - Stiffness is really fucking up the solution
 
 % #TODO - something about the way we are dealing with the individuals after
 % optimisation seems to be having the same effect on the solution as if
@@ -74,3 +73,7 @@ FT = world.getForcesTorques();
 
 % #TODO The tentacle creation UI should place the tentacle in vetrically
 % downwards position before passing on to the next stage of the code
+
+% It makes sense that we seem to get results that seem dierectly opposite
+% to what we expect because of the local minim resilt where we have no
+% torques to rtate us into the expected result direction
