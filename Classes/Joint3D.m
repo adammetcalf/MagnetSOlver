@@ -1,4 +1,4 @@
-classdef Joint3D
+classdef Joint3D < JointInterface
     % This is a joint, which is represented by a single standard Denavit
     % Hartenberg frame
     
@@ -16,7 +16,7 @@ classdef Joint3D
     methods
         
         %Constructor
-        function obj = Joint(theta,alpha,alpha2,a,d)
+        function obj = Joint3D(theta,alpha,alpha2,a,d)
             %JOINT Construct an instance of Joint
 
             % Inject DH parameters

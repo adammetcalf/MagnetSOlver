@@ -6,7 +6,7 @@ classdef Tentacle
     
     %% Private Properties
     properties (Access = private)
-        Joints Joint; % An array of joint objects
+        Joints; % An array of joint objects
         HGMs double; % A matrix of the homogenous transfomration matrices
         LinkHGMs double % A matrix of the homogeneous transformation matrices for each link.
         Jacobean double; % the Jacobean matrix for this tentacle.
@@ -18,6 +18,7 @@ classdef Tentacle
         LinkMass double; % holds the mass of each link
         Angles double; %Holds the joint angles
         LinkLength double; %Holds the link length
+        Dimensions = 2; % Holds the dimension in which this tentacle may be analysed
     end
 
     %% Public Methods
@@ -28,29 +29,60 @@ classdef Tentacle
         function obj = Tentacle(LinkLength,Angles,Magnetisation,MagDirections)
             %TENTACLE Construct an instance of Tentacle
 
+            obj.Joints = cell(1);
+
             obj.LinkLength = LinkLength;
 
             obj.Angles = Angles;
 
             obj.MagDirections = MagDirections;
             
-            % Create n Joints, where n is the number of rows in the
-            % provided 'Angles'
-            for i=1:size(Angles,1)
+            if size(Angles,2) ==2  % 2 dimensional analysis
 
-                % Note: A joint is defined by a denavit hartenberg frame.
-                %joint = Joint(theta,alpha,a,d)
+                obj.Dimensions = 2;
 
-                if i == 1
-                    % Joint1 is at origin, has no length
-                    joint = Joint(Angles(i,1),Angles(i,2),0,0);
-                    obj.Joints(i) = joint;
-                
-                else
-                   % Lengths now involved
-                   joint = Joint(Angles(i,1),Angles(i,2),0,LinkLength);
-                   obj.Joints(i) = joint;
+                % Create n Joints, where n is the number of rows in the
+                % provided 'Angles'
+                for i=1:size(Angles,1)
+    
+                    % Note: A joint is defined by a denavit hartenberg frame.
+                    %joint = Joint(theta,alpha,a,d)
+    
+                    if i == 1
+                        % Joint1 is at origin, has no length
+                        joint = Joint(Angles(i,1),Angles(i,2),0,0);
+                        obj.Joints{i} = joint;
+                    
+                    else
+                       % Lengths now involved
+                       joint = Joint(Angles(i,1),Angles(i,2),0,LinkLength);
+                       obj.Joints{i} = joint;
+                    end
                 end
+
+            else % 3 dimensional analysis
+
+                obj.Dimensions = 3;
+
+                % Create n Joints, where n is the number of rows in the
+                % provided 'Angles'
+                for i=1:size(Angles,1)
+    
+                    % Note: A joint is defined by a denavit hartenberg frame.
+                    %joint = Joint(theta,alpha,a,d)
+    
+                    if i == 1
+                        % Joint1 is at origin, has no length
+                        joint = Joint3D(Angles(i,1),Angles(i,2),Angles(i,3),0,0);
+                        obj.Joints{i} = joint;
+                    
+                    else
+                       % Lengths now involved
+                       joint = Joint3D(Angles(i,1),Angles(i,2),Angles(i,3),0,LinkLength);
+                       obj.Joints{i} = joint;
+                    end
+                end      
+
             end
 
             % Link Radii (m)
@@ -94,8 +126,8 @@ classdef Tentacle
             else
                 %Update the angles
                 for i=1:size(Angles,1)
-                    joint = obj.Joints(i);  %Extract joint
-                    obj.Joints(i) = joint.UpdateAngles(Angles(i,:)); %Inject new angle and update joints array
+                    joint = obj.Joints{i};  %Extract joint
+                    obj.Joints{i} = joint.UpdateAngles(Angles(i,:)); %Inject new angle and update joints array
                 end
                 %End For Loop
             end
@@ -179,7 +211,7 @@ classdef Tentacle
             for i=1:length(obj.Joints)
 
                 % Get Joint
-                J = obj.Joints(i);
+                J = obj.Joints{i};
                 
                 % Extract Frame from Joint
                 Frame = getFrame(J);

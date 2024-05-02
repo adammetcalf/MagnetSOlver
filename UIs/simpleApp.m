@@ -11,15 +11,17 @@ fig = uifigure;
 fig.Name = "Design Tentacle";
 
 % Manage app layout
-gl = uigridlayout(fig,[4 5]);  % 5 rows, 5 columns
+gl = uigridlayout(fig,[4 6]);  % 5 rows, 6 columns
 gl.RowHeight = {30, 150, '4x', 30};  % Set second row to fixed height for the table
-gl.ColumnWidth = {'1x', '1x', '1x', '1x', '1x' };
+gl.ColumnWidth = {'1x', '1x', '1x', '1x', '1x', '1x' };
 
 % Create UI components
 NumLinks = uieditfield(gl, "numeric","ValueChangedFcn",@(src,event) NumLinksValueChanged(src,event,fig));                                  % To hold the number of links
 NumLinksTxt = uilabel(gl, 'Text','Number Of Links: ');                  % To hold the label for number of links
 LinkLength = uieditfield(gl, "numeric","ValueChangedFcn",@(src,event) LengthValueChanged(src,event,fig));                                % To hold the number of links
 LinkLengthTxt = uilabel(gl, 'Text','Link Length: ');                    % To hold the label for number of links
+Dimension = uieditfield(gl, "numeric");                                  % To hold the number of Dimensions
+DimensionTxt = uilabel(gl, 'Text','Dimensions: ');                    % To hold the label for number of dimensions
 btnClose = uibutton(gl, 'push','Text', 'Complete');                     % Add a push button to complete the tentacle creation
 btnReset = uibutton(gl, 'push','Text', 'Reset');                        % Add a push button to reset the tentacle creation
 ax = uiaxes(gl);                                                        % Axes to hold the tentacle
@@ -31,11 +33,20 @@ NumLinks.Value = 1;                                                     % Always
 NumLinks.HorizontalAlignment = 'center';                                % Centre the field entry
 NumLinks.Limits = [1 15];                                               % Limits from 1 to 15 links
 NumLinks.RoundFractionalValues = 'on';                                  % Always integer
+NumLinksTxt.HorizontalAlignment = 'Right';
 
 % Define the 'Link Length' input field
 LinkLength.Value = 0.01;                                                % Abritrary Link Length
 LinkLength.HorizontalAlignment = 'center';                              % Centre the field entry
 LinkLength.Limits = [0.001 0.1];                                        % Limit the lingth lengths
+LinkLengthTxt.HorizontalAlignment = 'Right';
+
+% Define the 'dimensions input field
+Dimension.Value = 3;
+Dimension.HorizontalAlignment = 'center';                               % Centre the field entry
+Dimension.Limits = [2 3];                                               % Limit the dimensions
+Dimension.RoundFractionalValues = 'on';                                 % Always integer
+DimensionTxt.HorizontalAlignment = 'Right';
 
 % Define the table
 s = uistyle("HorizontalAlignment","center");
@@ -50,8 +61,8 @@ table.ColumnEditable = columnEdit;
 addStyle(table,s)
 
 % create links 
-Angles = zeros(NumLinks.Value+1,2);
-Angles(1,:) = [90,90];
+Angles = zeros(NumLinks.Value+1,Dimension.Value);
+Angles(1,1:2) = [90,90];
 
 tentacleResult = Angles;
 
@@ -71,25 +82,29 @@ NumLinksTxt.Layout.Column = 1;
 NumLinks.Layout.Row = 1;
 NumLinks.Layout.Column = 2;
 LinkLengthTxt.Layout.Row = 1;
-LinkLengthTxt.Layout.Column = 4;
+LinkLengthTxt.Layout.Column = 3;
 LinkLength.Layout.Row = 1;
-LinkLength.Layout.Column = 5;
+LinkLength.Layout.Column = 4;
+DimensionTxt.Layout.Row = 1;
+DimensionTxt.Layout.Column = 5;
+Dimension.Layout.Row = 1;
+Dimension.Layout.Column = 6;
 
 % Row 2
 table.Layout.Row = 2;
-table.Layout.Column = [1 5];
+table.Layout.Column = [1 6];
 
 % Row 3
 ax.Layout.Row = 3;
-ax.Layout.Column = [1 5];
+ax.Layout.Column = [1 6];
 
 % Row 4
 btnClose.Layout.Row = 4;
-btnClose.Layout.Column = [4 5];
+btnClose.Layout.Column = [4 6];
 btnReset.Layout.Row = 4;
-btnReset.Layout.Column = [1 2];
+btnReset.Layout.Column = [1 3];
 
-% Configure UI component appearance
+% Configure UI component appearance Angles(1,:) = [90,180];
 plotTentacle(fig);
 
 %% Callbacks
@@ -100,8 +115,8 @@ btnClose.ButtonPushedFcn = {@closeApp, fig};
     function closeApp(src, event, fig)
 
         % create links 
-        Angles = zeros(NumLinks.Value+1,2);
-        Angles(1,:) = [90,180];
+        Angles = zeros(NumLinks.Value+1,Dimension.Value);
+        Angles(1,1:2) = [90,180];
 
         tentacleResult = Angles;
         
@@ -131,8 +146,8 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
         table.ColumnName = arrayfun(@(i) sprintf('Link %d', i), 1:NumLinks.Value, 'UniformOutput', false);
 
         % create links 
-        Angles = zeros(NumLinks.Value+1,2);
-        Angles(1,:) = [90,90];
+        Angles = zeros(NumLinks.Value+1,Dimension.Value);
+        Angles(1,1:2) = [90,90];
 
         tentacleResult = Angles;
         
@@ -158,8 +173,8 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
         table.ColumnName = arrayfun(@(i) sprintf('Link %d', i), 1:NumLinks.Value, 'UniformOutput', false);
 
         % create links 
-        Angles = zeros(NumLinks.Value+1,2);
-        Angles(1,:) = [90,90];
+        Angles = zeros(NumLinks.Value+1,Dimension.Value);
+        Angles(1,1:2) = [90,90];
 
         tentacleResult = Angles;
         
@@ -178,8 +193,8 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
     function LengthValueChanged(src,event,fig)
 
         % create links 
-        Angles = zeros(NumLinks.Value+1,2);
-        Angles(1,:) = [90,90];
+        Angles = zeros(NumLinks.Value+1,Dimension.Value);
+        Angles(1,1:2) = [90,90];
 
         tentacleResult = Angles;
         
@@ -267,8 +282,8 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
         CheckNdFeb(fig);
 
         % create links 
-        Angles = zeros(NumLinks.Value+1,2);
-        Angles(1,:) = [90,90];
+        Angles = zeros(NumLinks.Value+1,Dimension.Value);
+        Angles(1,1:2) = [90,90];
         
         % arbitrary magentisation
         Magnetisation = 2*NumLinks.Value;
@@ -298,4 +313,6 @@ btnReset.ButtonPushedFcn = {@resetApp, fig};
     end
 
 
+
 end
+

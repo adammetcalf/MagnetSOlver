@@ -1,4 +1,4 @@
-classdef Joint
+classdef Joint < JointInterface
     % This is a joint, which is represented by a single standard Denavit
     % Hartenberg frame
     
@@ -8,6 +8,7 @@ classdef Joint
         d double; %DH Parameter (in m)
         theta double; %DH Parameter (in radians)
         alpha double; %DH Parameter (in radians)
+        alpha2 double; %DH Parameter (in radians) -- NOT USED IN THIS CHILD< BUT NECESSARY FOR INHERITENCE
         Frame double = zeros(4,4); % DH Frame
     end
     

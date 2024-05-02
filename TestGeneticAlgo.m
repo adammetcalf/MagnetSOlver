@@ -32,6 +32,7 @@ magnet2 = ExternalEPM(location2,orientation);
 % Create World
 world = World(tentacleResult, HomogeneousField,[], MultipoleActive);
 
+
 % Plot the world
 world = world.plotWorld(false,false,1);
 
@@ -61,6 +62,7 @@ FT = world.getForcesTorques();
 % individudal??
 
 % #TODO optimise theta angles too
+% #TODO integrate the alpha2 angles into the solution
 
 
 % #TODO tentacle magentisation should be defined by the mass of particle
@@ -69,10 +71,8 @@ FT = world.getForcesTorques();
 % #TODO angle constraints in optimisation and genetic (individual) must be
 % reconsidered
 
-% #TODO The iron should be considered - magnetissation? 
+% #TODO The iron should be considered - magnetisation/ rememnace?
 
-% #TODO The tentacle creation UI should place the tentacle in vetrically
-% downwards position before passing on to the next stage of the code
 
 % It makes sense that we seem to get results that seem dierectly opposite
 % to what we expect because of the local minim resilt where we have no
