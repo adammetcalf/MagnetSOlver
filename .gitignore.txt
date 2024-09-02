@@ -1,0 +1,6 @@
+# Ignore everything in the cpp directory
+cpp/**
+
+# But do not ignore .h and .cpp files in any subdirectory of cpp
+!cpp/**/*.h
+!cpp/**/*.cpp
