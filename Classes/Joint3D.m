@@ -3,7 +3,7 @@ classdef Joint3D < JointInterface
     % Hartenberg frame
     
     %% Private Properties
-    properties (Access = private) 
+    properties (Access = protected) 
         a double; %DH Parameter (in m)
         d double; %DH Parameter (in m)
         theta double; %DH Parameter (in radians) - corresponding to local z deflection

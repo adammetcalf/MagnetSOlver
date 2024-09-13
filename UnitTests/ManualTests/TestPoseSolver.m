@@ -6,7 +6,8 @@ clc;
 % and the inbuilt minimisation (optimisation) functions
 
 % Define world inputs
-JointAngles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0;0,0];
+%JointAngles = [90,180;0,0;0,0;0,0;0,0;0,0;0,0;0,0];                    %2d
+JointAngles = [90,180,0;0,0,0;0,0,0;0,0,0;0,0,0;0,0,0;0,0,0;0,0,0];                    %3d
 Magdirection = [0,0,0,0,0,0,0;0,0,0,0,0,0,0;1,1,1,-1,-1,-1,-1];
 TentacleMagnetisation = 14;
 LinkLength = 0.01;
@@ -25,12 +26,12 @@ World = World.plotWorld(false,false,1);
 FT = World.getForcesTorques();
 
 % Create PoseSolver
-%PoseSolver = PoseSolver(World);
+PoseSolver = PoseSolver(World);
 
 % Create GA 
-GA = GAMatlabFunction(World);
+%GA = GAMatlabFunction(World);
 
-optimizedAngles = GA.optimizeJoints();
+%optimizedAngles = GA.optimizeJoints();
 
 World = World.UpDateAngles(optimizedAngles);
 

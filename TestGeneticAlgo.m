@@ -69,7 +69,7 @@ FT = world.getForcesTorques();
 % inclusions
 
 % #TODO angle constraints in optimisation and genetic (individual) must be
-% reconsidered
+% reconsidered (particulary 3d)
 
 % #TODO The iron should be considered - magnetisation/ rememnace?
 
@@ -77,3 +77,5 @@ FT = world.getForcesTorques();
 % It makes sense that we seem to get results that seem dierectly opposite
 % to what we expect because of the local minim resilt where we have no
 % torques to rtate us into the expected result direction
+
+% #TODO IK

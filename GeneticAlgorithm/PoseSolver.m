@@ -1,52 +1,84 @@
 classdef PoseSolver
-    %POSESOLVER Optimiser to get the pose under current conditions
-    %   This solver uses optimisation to solve for the pose of the tentacle
+    %POSESOLVER Optimizer to get the pose under current conditions
+    %   This solver uses optimization to solve for the pose of the tentacle
     %   under current magnetic conditions
-    
+
     properties (Access = public)
         World World; % A world object
-        lowerBounds double = -180;
-        upperBounds double = 180;
-        initialThetas double;
+        lowerBounds double;
+        upperBounds double;
+        initialAngles double;
+        optimizeAngleIndices;
     end
-    
+
     methods
 
-        function obj = PoseSolver(World)
+        function obj = PoseSolver(World, optimizeAngleIndices)
             %POSESOLVER Construct an instance of this class
-            
+
             % Inject the world
             obj.World = World;
- 
+
             initialAngles = obj.World.getJointAngles();
-            obj.initialThetas = initialAngles(:,1); % Currently optimising only the alpha angles
-            % #TODO optimise the theta angles too
+            obj.initialAngles = initialAngles;
 
-            %Get the number of rows in angles
-            numAngles = size(initialAngles, 1);
+            if nargin < 2
+                % By default, optimize over all angles
+                obj.optimizeAngleIndices = 1:size(initialAngles, 2);
+            else
+                obj.optimizeAngleIndices = optimizeAngleIndices;
+            end
 
-            % Set the lower and upper bounds for the theta angles
-            obj.lowerBounds = repmat(obj.lowerBounds, numAngles, 1);
-            obj.upperBounds = repmat(obj.upperBounds, numAngles, 1);
+            % Get the number of joints and angles
+            numJoints = size(initialAngles, 1);
+            numAnglesToOptimize = length(obj.optimizeAngleIndices);
 
+            % Set the lower and upper bounds for the angles to optimize
+            obj.lowerBounds = repmat(-180, numJoints, numAnglesToOptimize);
+            obj.upperBounds = repmat(180, numJoints, numAnglesToOptimize);
         end
-        
+
         function newAngles = optimizeJoints(obj)
-            initialAngles = obj.World.getJointAngles();
-            initialAngles = initialAngles(:,2);
-            options = optimoptions('fmincon', 'Algorithm', 'sqp','Display', 'none'); % Display: none suppresses all the annoying messages
+            initialAngles = obj.World.getJointAngles(); % size numJoints x numAnglesPerJoint
 
-            [optimizedAngles,~] = fmincon(@obj.objectiveFunction, initialAngles, [], [], [], [], obj.lowerBounds, obj.upperBounds, [], options);
-            newAngles = [obj.initialThetas,optimizedAngles];
+            % Extract the angles to optimize
+            anglesToOptimize = initialAngles(:, obj.optimizeAngleIndices);
+
+            % Flatten the angles into a vector
+            initialGuess = anglesToOptimize(:);
+
+            options = optimoptions('fmincon', 'Algorithm', 'sqp', 'Display', 'none');
+
+            % Flatten lower and upper bounds
+            lb = obj.lowerBounds(:);
+            ub = obj.upperBounds(:);
+
+            [optimizedAngles, ~] = fmincon(@obj.objectiveFunction, initialGuess, [], [], [], [], lb, ub, [], options);
+
+            % Reshape optimizedAngles back into numJoints x numAnglesToOptimize
+            optimizedAngles = reshape(optimizedAngles, size(anglesToOptimize));
+
+            % Form the newAngles matrix
+            newAngles = obj.initialAngles; % Start with initial angles
+            newAngles(:, obj.optimizeAngleIndices) = optimizedAngles; % Replace the optimized angles
         end
-        
+
         function cost = objectiveFunction(obj, angles)
-            angles=[obj.initialThetas,angles]; %form complete angles
-            obj.World = obj.World.UpDateAngles(angles);  % Update the angles
-            forcesTorques = obj.World.getForcesTorques(); 
+            % angles is a vector of the angles being optimized, reshape accordingly
+            numJoints = size(obj.initialAngles, 1);
+            numAnglesToOptimize = length(obj.optimizeAngleIndices);
+            angles = reshape(angles, numJoints, numAnglesToOptimize);
+
+            % Form the complete angles matrix
+            completeAngles = obj.initialAngles; % Start with initial angles
+            completeAngles(:, obj.optimizeAngleIndices) = angles; % Replace the optimized angles
+
+            % Update the angles in the World
+            obj.World = obj.World.UpDateAngles(completeAngles);  % Update the angles
+
+            forcesTorques = obj.World.getForcesTorques();
             forcesTorques = abs(forcesTorques);
-            cost = sum(((forcesTorques.*100)),"all");
-            
+            cost = sum(((forcesTorques .* 100)), "all");
         end
 
     end

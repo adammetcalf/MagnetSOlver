@@ -15,10 +15,14 @@ classdef JointInterface
 
     
     
-    %% Abstract Methods
-    methods (Abstract)
+    %% Public Methods
+    methods
         obj = UpdateAngles(obj, Angles) % Method to update joint angles
         Frame = getFrame(obj)           % Accessor to retrieve the DH frame
+    end
+
+    %% Privste methods
+    methods (Access = private)
         obj = evaluateFrame(obj)        % Evaluates the frame assoicated with the joint
     end
     
