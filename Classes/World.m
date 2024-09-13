@@ -150,7 +150,7 @@ classdef World
                 obj.PlotMagenticMoments(LinkPos,Moments)
             end
             if MagField
-                quiver3(obj.x, obj.y, obj.z, obj.Bx, obj.By, obj.Bz, 0.5, 'b','LineWidth', 0.25);
+                quiver3(obj.x, obj.y, obj.z, obj.Bx, obj.By, obj.Bz, 0.5, 'b','LineWidth', 0.5);
             end
             axis equal;
             axis([-obj.PlotLength obj.PlotLength -obj.PlotLength obj.PlotLength -obj.PlotLength obj.PlotLength]);
@@ -175,7 +175,7 @@ classdef World
             % Plot joints and links
             plot3(ax, jointPos(1,:), jointPos(2,:), jointPos(3,:), 'ro-', 'MarkerSize', 4, 'MarkerFaceColor', 'r', 'LineWidth', 1);
             hold(ax, 'on');
-            plot3(ax, LinkPos(1,:), LinkPos(2,:), LinkPos(3,:), 'bo-', 'MarkerSize', 4, 'MarkerFaceColor', 'b');
+            plot3(ax, LinkPos(1,:), LinkPos(2,:), LinkPos(3,:), 'bo', 'MarkerSize', 4, 'MarkerFaceColor', 'b');
                 
             axis(ax, 'equal');
             xlim(ax, [-obj.PlotLength obj.PlotLength]);
