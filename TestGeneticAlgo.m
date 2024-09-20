@@ -49,7 +49,7 @@ waitfor(fig);
 world = world.UpDateAngles(BestAngles);
 
 % Plot the world
-world = world.plotWorld(false,false,2);
+world = world.plotWorld(true,false,2);
 
 FT = world.getForcesTorques();
 
