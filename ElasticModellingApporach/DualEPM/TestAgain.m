@@ -9,8 +9,8 @@ n = 20; % Number of nodes
 L = 0.05; % Length of the tentacle
 
 % Get the target positions from the UI
-[x_positionsUI, y_positionsUI, magn_momentsUI] = elastica_UI(n, L);
-z_positionsUI = y_positionsUI; % Since we are working in x-z plane
+[x_positionsUI, z_positionsUI, magn_momentsUI] = elastica_UI(n, L);
+
 
 % Define robots
 robot1_template = RobotWithMagnet('urdf/kuka_iiwa_1.urdf');
@@ -36,11 +36,11 @@ lb = [lb_robot1, lb_robot2];
 ub = [ub_robot1, ub_robot2];
 
 % Set optimization options
-options = optimoptions('fmincon', 'Algorithm', 'sqp', 'Display', 'iter', ...
-                       'OptimalityTolerance', 1e-6, 'MaxFunctionEvaluations', 1000);
+%options = optimoptions('fmincon', 'Algorithm', 'sqp', 'Display', 'iter', ...
+%                       'OptimalityTolerance', 1e-6, 'MaxFunctionEvaluations', 1000);
 
 % Set options for particleswarm
-%options = optimoptions('particleswarm', 'SwarmSize', 50, 'MaxIterations', 100, 'Display', 'iter', 'UseParallel', false);
+options = optimoptions('particleswarm', 'SwarmSize', 50, 'MaxIterations', 100, 'Display', 'iter', 'UseParallel', false);
 
 % Define the objective function as a function handle
 objectiveFunction = @(jointAngles) objective_function(jointAngles, x_positionsUI, z_positionsUI, n, L, magn_momentsUI, robot1_template, robot2_template);
@@ -49,10 +49,10 @@ objectiveFunction = @(jointAngles) objective_function(jointAngles, x_positionsUI
 numVars = length(initial_joint_angles); % Should be 14
 
 % Run fmincon
-[optimal_joint_angles, fval] = fmincon(objectiveFunction, initial_joint_angles, [], [], [], [], lb, ub, [], options);
+%[optimal_joint_angles, fval] = fmincon(objectiveFunction, initial_joint_angles, [], [], [], [], lb, ub, [], options);
 
 % Run particleswarm
-%[optimal_joint_angles, fval] = particleswarm(objectiveFunction, numVars, lb, ub, options);
+[optimal_joint_angles, fval] = particleswarm(objectiveFunction, numVars, lb, ub, options);
 
 % Update robots with optimal joint angles
 optimal_jointAngles_robot1 = optimal_joint_angles(1:7);

@@ -3,7 +3,7 @@ clear;
 clc;
 
 % Parameters
-n = 20; % Number of nodes
+n = 50; % Number of nodes
 L = 0.05; % Length of the tentacle
 Opt = 3;  % 1 = optimisation, 2 = Genetic Algorithm, 3 = particle swarm
 

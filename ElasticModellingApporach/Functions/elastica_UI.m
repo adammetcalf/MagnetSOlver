@@ -23,8 +23,8 @@ function [x_positions, y_positions, moments] = elastica_UI(NumNodes, Length)
     axis equal;
 
     % Set axes limits to +/- (Length + 2 segments)
-    xlim([-(L+ 2*delta_s), L + 2*delta_s]);
-    ylim([-(L+ 2*delta_s), L + 2*delta_s]);
+    xlim([-(L + 2 * delta_s), L + 2 * delta_s]);
+    ylim([-(L + 2 * delta_s), L + 2 * delta_s]);
 
     xlabel('x position (m)');
     ylabel('y position (m)');
@@ -33,7 +33,9 @@ function [x_positions, y_positions, moments] = elastica_UI(NumNodes, Length)
 
     % Create UI controls (buttons) at the bottom row
     hResetButton = uicontrol('Style', 'pushbutton', 'String', 'Reset', ...
-        'Units', 'normalized', 'Position', [0.1 0.01 0.1 0.05], 'Callback', @resetButtonCallback);
+        'Units', 'normalized', 'Position', [0.05 0.01 0.1 0.05], 'Callback', @resetButtonCallback);
+    hLoadButton = uicontrol('Style', 'pushbutton', 'String', 'Load Jshape', ...
+        'Units', 'normalized', 'Position', [0.25 0.01 0.1 0.05], 'Callback', @loadButtonCallback);
     hInvertButton = uicontrol('Style', 'pushbutton', 'String', 'Invert Moments', ...
         'Units', 'normalized', 'Position', [0.45 0.01 0.1 0.05], 'Callback', @invertButtonCallback);
     hStopButton = uicontrol('Style', 'pushbutton', 'String', 'Stop', ...
@@ -77,7 +79,7 @@ function [x_positions, y_positions, moments] = elastica_UI(NumNodes, Length)
     function resetButtonCallback(src, ~)
         data = guidata(src);
         % Reset the elastica to horizontal
-        data.r = zeros(n,2);
+        data.r = zeros(n, 2);
         data.r(:,1) = linspace(0, L, n);
         % Reset magnetic moments to x-axis
         data.moments = repmat([1, 0], n, 1);
@@ -86,6 +88,36 @@ function [x_positions, y_positions, moments] = elastica_UI(NumNodes, Length)
         set(data.hElastica, 'XData', data.r(:,1), 'YData', data.r(:,2));
         set(data.hMoments, 'XData', data.r(:,1), 'YData', data.r(:,2), ...
             'UData', data.moments(:,1), 'VData', data.moments(:,2));
+        guidata(src, data);
+    end
+
+    function loadButtonCallback(src, ~)
+    data = guidata(src);
+    % Load Jshape.mat, which should contain a 50x2 matrix
+    loaded_data = load('Jshape.mat');
+        if isfield(loaded_data, 'Jshape') && size(loaded_data.Jshape, 1) == 50 && size(loaded_data.Jshape, 2) == 2
+            % Convert positions from mm to m
+            Jshape = loaded_data.Jshape / 1000;
+            
+            % Smooth the Jshape using a moving average
+            windowSize = 5; % Adjust the window size as needed
+            Jshape_smooth(:, 1) = smoothdata(Jshape(:, 1), 'movmean', windowSize);
+            Jshape_smooth(:, 2) = smoothdata(Jshape(:, 2), 'movmean', windowSize);
+            
+            % Update the elastica nodes with the smoothed positions
+            data.r = Jshape_smooth;
+            
+            % Update magnetic moments to align with local tangents
+            data.moments = compute_moments(data.r);
+            
+            % Update the plot
+            set(data.hPoints, 'XData', data.r(:,1), 'YData', data.r(:,2));
+            set(data.hElastica, 'XData', data.r(:,1), 'YData', data.r(:,2));
+            set(data.hMoments, 'XData', data.r(:,1), 'YData', data.r(:,2), ...
+                'UData', data.moments(:,1), 'VData', data.moments(:,2));
+        else
+            disp('Jshape.mat must contain a 50x2 matrix.');
+        end
         guidata(src, data);
     end
 
