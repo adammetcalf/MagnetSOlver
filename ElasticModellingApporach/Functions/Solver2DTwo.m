@@ -18,6 +18,8 @@ function [xpos, zpos] = Solver2DTwo(n, L, magFieldFunc, magMoments)
     rho = 1100; % Density [kg/m^3]
     g = -9.81; % Acceleration due to gravity [m/s^2]
 
+    EI = E*I;
+
     % Magnetic
     mu0 = 4 * pi * 1e-7; % Vacuum permeability (H/m or N/A^2)
     remanence = 0.10; % Saturation remanent magnetic field [T]
@@ -66,7 +68,6 @@ function [xpos, zpos] = Solver2DTwo(n, L, magFieldFunc, magMoments)
         B_interp = [Bx_interp(:), Bz_interp(:)];
 
         % Compute the expression for updating theta_p
-        EI = E * I; % Bending stiffness
         gravity_term = (rho * g * A / EI) * cos(theta);
         magnetic_term = (sum(m_hat .* B_interp, 2) / EI);
         expr = gravity_term + magnetic_term;

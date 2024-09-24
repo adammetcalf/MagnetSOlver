@@ -164,7 +164,7 @@ classdef GA
                                    'OptimalityTolerance', 1e-6, 'MaxFunctionEvaluations', 500);
         
             % Define the objective function
-            objectiveFunc = @(field) obj.objective_function(field, x_positionsUI, y_positionsUI, n, L, magn_momentsUI);
+            objectiveFunc = @(field) obj.objective_function(field, x_positionsUI, y_positionsUI, n, L, magn_momentsUI,obj.world.getOri());
             
             % Perform the optimization
             [optimal_field, optimal_error] = fmincon(objectiveFunc, initial_field, [], [], [], [], lb, ub, [], options);
@@ -179,13 +179,13 @@ classdef GA
             end
         end
 
-        function error = objective_function(obj, field, x_positionsUI, y_positionsUI, n, L, magn_momentsUI)
+        function error = objective_function(obj, field, x_positionsUI, y_positionsUI, n, L, magn_momentsUI,orientation)
             % Set the magnetic field
             Bx = field(1);
             By = field(2);
         
             % Solve the elastica using the Solver2D function
-            [x_positions, y_positions] = Solver2D(n, L, Bx, By, magn_momentsUI);
+            [x_positions, y_positions] = Solver2D(n, L, Bx, By, magn_momentsUI,orientation);
         
             % Calculate the error (Euclidean distance)
             error = sqrt(sum((x_positions - x_positionsUI).^2 + (y_positions - y_positionsUI).^2));
